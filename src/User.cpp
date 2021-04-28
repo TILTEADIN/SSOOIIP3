@@ -1,4 +1,5 @@
-#include "User.h"
+#include "../include/User.h"
+
 
 //Cada usuario tiene asociada una peticion, de manera que nos ahorramos crear clases con poca responsabilidad
 User::User(int id ,int initialCredit, bool isVip, std::string requestedWord){

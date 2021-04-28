@@ -2,6 +2,7 @@
 #include <ctime>
 #include <condition_variable>
 #include <queue>
+#include "../include/User.h"
 
 #define MAXIMUM_CREDIT 15
 #define NUM_CLIENTS 3

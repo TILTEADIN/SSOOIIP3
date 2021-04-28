@@ -5,7 +5,7 @@
 
 #include "PaymentGateway.cpp"
 
-std::string colour[4] = {"Blue", "Red", "Orange", "Yellow"};
+std::vector<std::string> diccionary = {"hola","eduardo"};
 
 /* Request to payment service to recharge credit of a given user */
 void requestCreditRecharge(User *usuario) {
@@ -19,7 +19,13 @@ void requestCreditRecharge(User *usuario) {
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     std::cout << BHIGREEN << " [MG] Saldo del usuario " << usuario->getId() << " recargado a " 
         << usuario->getCurrentCredit() << " créditos." << BHIWHITE << std::endl;
-}   
+}    
+
+/* Select a random word for the diccionary */
+std::string selectRandomWord() {
+    int size = diccionary.size();
+
+}
 
 /* Generate if user is vip or not */
 bool generateIsVip() {

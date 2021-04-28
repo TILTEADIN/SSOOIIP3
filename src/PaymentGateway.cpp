@@ -2,10 +2,8 @@
 #include <condition_variable>
 #include <queue>
 #include <thread>
-
-#include "User.h"
-#include "definitions.h"
-#include "colors.h"
+#include "../include/definitions.h"
+#include "../include/colors.h"
 
 class PaymentGateway {
 public:
@@ -19,7 +17,7 @@ public:
 
         while (1) {
             std::unique_lock<std::mutex> ul(paymentGatewayMutex);
-            std::cout << BHICYAN << " [PG] Esperando a solicitudes de recarga... " << BHIWHITE << std::endl;
+            std::cout << BHICYAN << " [PG] Waiting for ref... " << BHIWHITE << std::endl;
             cv.wait(ul, [] {return !rechargeCreditRequestQueue.empty();});
 
             User *user = rechargeCreditRequestQueue.front();
