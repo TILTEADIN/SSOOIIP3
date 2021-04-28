@@ -1,4 +1,3 @@
-#include <iostream>
 #include <string>
 
 class User {
@@ -10,7 +9,8 @@ class User {
         std::string requestedWord;
 
     public:
-        User(int initialCredit, int currentCredit, int id, bool isVip,std::string requestedWord);
+        User(int id, int initialCredit, bool isVip, std::string requestedWord);
+
         int getInitialCredit();
         int getCurrentCredit();
         int getId();

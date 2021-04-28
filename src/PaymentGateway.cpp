@@ -1,36 +1,43 @@
 #include <iostream>
 #include <condition_variable>
 #include <queue>
-#include <cstdlib>
-#include <ctime>
+#include <thread>
 
-#include "../include/User.h"
+#include "User.h"
+#include "definitions.h"
+#include "colors.h"
 
-#define MAXIMUM_CREDIT 15
+class PaymentGateway {
+public:
+    PaymentGateway(){};
 
-std::condition_variable cv; 
-std::mutex sem;
-std::queue<User> q;
+    void operator()() {
+        waitRequest();
+    }
 
-int generateCredit(){
-  srand((unsigned) time(0));
-  return ((rand() % MAXIMUM_CREDIT) + 1);
-}
+    void waitRequest() {
 
-void waitRequest() {
-    std::unique_lock<std::mutex> ul(sem);
-    cv.wait(ul, []{return q.empty();});
-    User user = q.front();
-    q.pop();
+        while (1) {
+            std::unique_lock<std::mutex> ul(paymentGatewayMutex);
+            std::cout << BHICYAN << " [PG] Esperando a solicitudes de recarga... " << BHIWHITE << std::endl;
+            cv.wait(ul, [] {return !rechargeCreditRequestQueue.empty();});
 
-    std::cout << "El cliente " << user.getId() << " solicita una recarga de saldo." << std::endl;
-    user.setCurrentCredit(generateCredit());
-    std::cout << "La cuenta del cliente "<< user.getId() << " ha sido recargada con " << user.getCurrentCredit() << " créditos." << std::endl;
-}
+            User *user = rechargeCreditRequestQueue.front();
+            rechargeCreditRequestQueue.pop();
 
-int main() {
-    waitRequest();
-    //std::cout << generateCredit << std::endl;
-    return 0;
-}
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            std::cout << BHICYAN << " [PG] El cliente " << user->getId() << 
+                    " solicita una recarga de saldo." << BHIWHITE << std::endl;
+
+            user->setCurrentCredit(generateRandomNumber(MAXIMUM_CREDIT));
+
+            std::cout << BHICYAN << " [PG] La cuenta del cliente "<< user->getId() << 
+                    " ha sido recargada con " << user->getCurrentCredit() << " créditos." << BHIWHITE << std::endl;
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+            rechargeCreditRequestMutex.unlock();
+        }
+    }
+};
 
