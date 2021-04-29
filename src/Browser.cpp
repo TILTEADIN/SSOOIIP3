@@ -11,9 +11,8 @@
 #include <iterator>
 #include <sstream>
 #include <algorithm>
-using namespace std; 
   
-Browser::Browser(Thread_Structure* thread_structure, mutex *mtx)
+Browser::Browser(Thread_Structure* thread_structure, std::mutex *mtx)
 {	
     this->thread_structure = thread_structure; 
 	task_begin = (*thread_structure).getThread_begin();
@@ -30,7 +29,7 @@ void Browser::operator()()
 
 void Browser::main_Browser()
 {
-    string path = (*thread_structure).getFile_name();
+    std::string path = (*thread_structure).getFile_name();
     if(readFile(path, task_begin, task_end) != 0){
         printf("[Browser] Error reading file\n");
     }
@@ -38,10 +37,10 @@ void Browser::main_Browser()
 }
 
 //Reads the file and checks if there's some error
-int Browser::readFile(string path,int task_begin,int task_end)
+int Browser::readFile(std::string path,int task_begin,int task_end)
 {
-    ifstream in_file;
-    string each_line;
+    std::ifstream in_file;
+    std::string each_line;
     int my_line = task_begin;
 
     in_file.open(path);
@@ -64,16 +63,15 @@ int Browser::readFile(string path,int task_begin,int task_end)
 }
 
 //Method used for finding a word within a given string
-void Browser::findWord(string each_line, int my_line){
- 
+void Browser::findWord(std::string each_line, int my_line){
 	 
-	string word_previous = "",word_next="";
-	string objective_word = (*thread_structure).getWord();
-    string each_word;
-    string str;
+	std::string word_previous = "",word_next="";
+	std::string objective_word = (*thread_structure).getWord();
+    std::string each_word;
+    std::string str;
 
-	istringstream str_stream(each_line);
-	vector<string> line_vector;
+	std::istringstream str_stream(each_line);
+	std::vector<std::string> line_vector;
     
     while (getline(str_stream, str,' '))
 		line_vector.push_back(str);
@@ -96,14 +94,14 @@ void Browser::findWord(string each_line, int my_line){
                 word_next = line_vector.at(i+1);
             }
             Result result_s(word_previous, word_next, each_word, (my_line+1));
-            lock_guard<mutex> lock(*mtx);
+            std::lock_guard<std::mutex> lock(*mtx);
             (*thread_structure).pushResult_list(result_s);
         }
 	}
-
 }
+
 //Checks whether a word is or isnt upper case and if so transforms it
-bool Browser::caseInsensitive(string each_word,string objective_word){
+bool Browser::caseInsensitive(std::string each_word, std::string objective_word){
     bool check = false;
     unsigned int c_correct = 0;
     unsigned int len = each_word.size();
@@ -128,7 +126,7 @@ bool Browser::caseInsensitive(string each_word,string objective_word){
 }
 
 //Skips text that we don't need to read 
-void Browser::skipText(ifstream& in_file,int task_begin,char delim){
+void Browser::skipText(std::ifstream& in_file,int task_begin,char delim){
     int i = 0;
     while ( i++ < task_begin)
       in_file.ignore(MAX_LEN, delim); 

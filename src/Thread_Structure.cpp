@@ -3,20 +3,14 @@
 #include <definitions.h>
 #include <list>
 
-using namespace std;
-
 //Thread begin and end stored in every object of this class to avoid repetitiviness 
-Thread_Structure::Thread_Structure(int thread_begin, int thread_end,string word,string file_name,int n_thread){
-       
+Thread_Structure::Thread_Structure(int thread_begin, int thread_end, std::string word, std::string file_name,int n_thread){
         this->thread_begin=thread_begin;
         this->thread_end=thread_end;
         this->word=word;
         this->file_name=file_name;
-
         this->n_thread = n_thread;
-
-        result_list = list <Result> ();
-
+        result_list = std::list <Result> ();
 }
 
 Thread_Structure::~Thread_Structure(){}
@@ -28,16 +22,21 @@ void Thread_Structure::pushResult_list(Result result_s){
 
 //Using a list to store results an later print them through this function
 void Thread_Structure::toString(){
-        string str_Result;
-        while (!result_list.empty())
-	{       
-		string Result_string = ("[Thread "+to_string(n_thread)+" starting at:"+to_string(thread_begin)+" – ends at: "+to_string(thread_end)+"] :: line "+ to_string(result_list.front().getLine()) +" :: … "+ result_list.front().getWord_previous() +" "+ result_list.front().getWord_objective() +" "+ result_list.front().getWord_next() +" … \r\t");
-                printf("%s\n",Result_string.c_str());
-                result_list.pop_front();
-	}
+    std::string str_Result;
+
+    while (!result_list.empty()) {       
+        std::string Result_string = ("[Thread "+std::to_string(n_thread) + 
+            " starting at:"+std::to_string(thread_begin)+" – ends at: " + 
+            std::to_string(thread_end) + "] :: line "+ std::to_string(result_list.front().getLine()) + 
+            " :: … "+ result_list.front().getWord_previous() + " " + result_list.front().getWord_objective() + 
+            " " + result_list.front().getWord_next() +" … \r\t");
+
+        printf("%s\n",Result_string.c_str());
+        result_list.pop_front();
+    }
 }
 
 int Thread_Structure::getThread_begin(){return thread_begin;}
 int Thread_Structure::getThread_end(){return thread_end;}
-string Thread_Structure::getWord(){return word;}
-string Thread_Structure::getFile_name(){return file_name;}
+std::string Thread_Structure::getWord(){return word;}
+std::string Thread_Structure::getFile_name(){return file_name;}

@@ -9,15 +9,19 @@ class PaymentGateway {
 public:
     PaymentGateway(){};
 
+    ~PaymentGateway(){
+        std::cout << BHICYAN << " [PG] Sistema de pago finalizandose..." << BHIWHITE << std::endl;
+    };
+
     void operator()() {
         waitRequest();
     }
 
     void waitRequest() {
 
+        std::cout << BHICYAN << " [PG] Esperando por peticiones de recarga... " << BHIWHITE << std::endl;
         while (1) {
             std::unique_lock<std::mutex> ul(paymentGatewayMutex);
-            std::cout << BHICYAN << " [PG] Waiting for ref... " << BHIWHITE << std::endl;
             cv.wait(ul, [] {return !rechargeCreditRequestQueue.empty();});
 
             User *user = rechargeCreditRequestQueue.front();

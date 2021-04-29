@@ -6,6 +6,8 @@
 
 #define MAXIMUM_CREDIT 15
 #define NUM_CLIENTS 3
+#define NEW_LINE 3
+#define MAX_LEN 2
 
 std::condition_variable cv;
 std::mutex rechargeCreditRequestMutex, paymentGatewayMutex;

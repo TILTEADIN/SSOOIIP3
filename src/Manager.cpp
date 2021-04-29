@@ -5,7 +5,7 @@
 
 #include "PaymentGateway.cpp"
 
-std::vector<std::string> diccionary = {"hola","eduardo"};
+std::vector<std::string> diccionary = {"cuadro","presidente","vendendores","titulo","precio"};
 
 /* Request to payment service to recharge credit of a given user */
 void requestCreditRecharge(User *usuario) {
@@ -23,8 +23,8 @@ void requestCreditRecharge(User *usuario) {
 
 /* Select a random word for the diccionary */
 std::string selectRandomWord() {
-    int size = diccionary.size();
-
+    int num = generateRandomNumber(diccionary.size());
+    return diccionary[num];
 }
 
 /* Generate if user is vip or not */
@@ -43,20 +43,18 @@ int main(int argc, char *argv[]) {
     /* Launch payment service */
     PaymentGateway pg;
     std::thread pgThread(pg);
-
+    
     std::vector<User> clients;
     std::vector<std::thread> threads;
 
     for (int i = 0; i < NUM_CLIENTS; i++) {
-        clients.push_back(User(i, generateRandomNumber(MAXIMUM_CREDIT), generateIsVip(),"palabra"));
+        clients.push_back(User(i, generateRandomNumber(MAXIMUM_CREDIT), generateIsVip(), selectRandomWord()));
         threads.push_back(std::thread(requestCreditRecharge, &clients[i]));
     }
 
     std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
-
-    std::cout << "fin";
         
-    pgThread.join();
+    pgThread.detach();
     
     return 0;
 }   

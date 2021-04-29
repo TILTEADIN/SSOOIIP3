@@ -5,10 +5,7 @@
 #include <vector>
 #include <string>
 
-
-
 class Result{
-
     private:
         int line;
         std::string word_previous;
