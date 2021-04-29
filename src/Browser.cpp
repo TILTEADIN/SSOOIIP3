@@ -1,7 +1,3 @@
-#include "../include/Browser.h"
-#include "../include/Thread_Structure.h"
-#include "../include/Result.h"
-
 #include <ctype.h>
 #include <fstream>
 #include <iostream>
@@ -11,13 +7,20 @@
 #include <iterator>
 #include <sstream>
 #include <algorithm>
-  
-Browser::Browser(Thread_Structure* thread_structure, std::mutex *mtx)
-{	
-    this->thread_structure = thread_structure; 
-	task_begin = (*thread_structure).getThread_begin();
-    task_end = (*thread_structure).getThread_end();
-	this->mtx = mtx;
+#include <list>
+#include <stdio.h>
+#include <sys/types.h>
+#include <dirent.h>
+
+#include "../include/Browser.h"
+#include "../include/Result.h"
+#include "../include/definitions.h"
+
+Browser::Browser(std::mutex *mtx, User* user)
+{
+    this->mtx = mtx;
+    std::list<Result> result_list;
+    this->user= user;
 }
 
 Browser::~Browser(){}
@@ -27,16 +30,34 @@ void Browser::operator()()
 	main_Browser();
 }
 
-void Browser::main_Browser()
-{
-    std::string path = (*thread_structure).getFile_name();
-    if(readFile(path, task_begin, task_end) != 0){
-        printf("[Browser] Error reading file\n");
-    }
-    
+int numberFilesToRead() {
+    DIR *dp;
+    int numFiles = 0;
+    struct dirent *ep;     
+    dp = opendir ("../material");
+
+    if (dp != NULL){
+        while ((ep = readdir (dp)))
+            numFiles++;
+        (void) closedir (dp);
+    }else
+        std::cout << BHIRED << " [BR] Couldn't open the directory" << BHIWHITE << std::endl;
+
+    return numFiles;
 }
 
-//Reads the file and checks if there's some error
+/*  */
+void Browser::main_Browser()
+{
+    //for (int i = 0; i < numberFilesToRead(); i++) {
+    //}
+
+    if(readFile(path) != 0){
+        std::cout << BHIRED << " [BR] Error reading file" << BHIWHITE << std::endl; 
+    }
+}
+
+/* Reads the file and checks if there's some error */
 int Browser::readFile(std::string path,int task_begin,int task_end)
 {
     std::ifstream in_file;
@@ -46,11 +67,9 @@ int Browser::readFile(std::string path,int task_begin,int task_end)
     in_file.open(path);
 
     if (!in_file) {
-        printf("[Error] Unable to open file\n");
+        std::cout << BHIRED << " [BR] Unable to open the file" << BHIWHITE << std::endl; 
         exit(1); // terminate with error
     }
-
-    skipText(in_file,task_begin,NEW_LINE);
 
     while (!(in_file.eof()) && (task_end > my_line)) {
         getline(in_file,each_line);
@@ -62,12 +81,12 @@ int Browser::readFile(std::string path,int task_begin,int task_end)
     return 0;
 }
 
-//Method used for finding a word within a given string
+/* Method used for finding a word within a given string */
 void Browser::findWord(std::string each_line, int my_line){
 	 
 	std::string word_previous = "",word_next="";
-	std::string objective_word = (*thread_structure).getWord();
-    std::string each_word;
+	std::string objective_word = user->getRequestedWord();
+    std::string each_word;  
     std::string str;
 
 	std::istringstream str_stream(each_line);
@@ -95,12 +114,12 @@ void Browser::findWord(std::string each_line, int my_line){
             }
             Result result_s(word_previous, word_next, each_word, (my_line+1));
             std::lock_guard<std::mutex> lock(*mtx);
-            (*thread_structure).pushResult_list(result_s);
+            result_list.push_back(result_s);
         }
 	}
 }
 
-//Checks whether a word is or isnt upper case and if so transforms it
+/* Checks whether a word is or isnt upper case and if so transforms it */
 bool Browser::caseInsensitive(std::string each_word, std::string objective_word){
     bool check = false;
     unsigned int c_correct = 0;
@@ -123,12 +142,4 @@ bool Browser::caseInsensitive(std::string each_word, std::string objective_word)
     }
 
     return check;
-}
-
-//Skips text that we don't need to read 
-void Browser::skipText(std::ifstream& in_file,int task_begin,char delim){
-    int i = 0;
-    while ( i++ < task_begin)
-      in_file.ignore(MAX_LEN, delim); 
-
 }

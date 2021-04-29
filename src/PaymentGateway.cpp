@@ -3,14 +3,13 @@
 #include <queue>
 #include <thread>
 #include "../include/definitions.h"
-#include "../include/colors.h"
 
 class PaymentGateway {
 public:
     PaymentGateway(){};
 
     ~PaymentGateway(){
-        std::cout << BHICYAN << " [PG] Sistema de pago finalizandose..." << BHIWHITE << std::endl;
+        std::cout << BHICYAN << " [PG] Payment Gateway is shutting down" << BHIWHITE << std::endl;
     };
 
     void operator()() {
@@ -19,7 +18,7 @@ public:
 
     void waitRequest() {
 
-        std::cout << BHICYAN << " [PG] Esperando por peticiones de recarga... " << BHIWHITE << std::endl;
+        std::cout << BHICYAN << " [PG] Waiting for top up requests... " << BHIWHITE << std::endl;
         while (1) {
             std::unique_lock<std::mutex> ul(paymentGatewayMutex);
             cv.wait(ul, [] {return !rechargeCreditRequestQueue.empty();});

@@ -1,21 +1,21 @@
 #pragma once
-
-#include "../include/Thread_Structure.h"
-
+#include "../include/User.h"
+#include "../include/Result.h"
 #include <string>
 #include <thread>
 #include <mutex>
 #include <shared_mutex>
+#include <list>
 
-class Browser
-{
-     private:
-        Thread_Structure* thread_structure;
+class Browser {
+    private:
         std::mutex *mtx;
-        int task_begin, task_end;
+
 
     public:
-        Browser(Thread_Structure* thread_structure, std::mutex *mtx);
+        User *user;
+        std::list<Result> result_list;
+        Browser(std::mutex *mtx, User* user);
         ~Browser();
         int readFile(std::string path,int task_begin,int task_end);
         void findWord(std::string each_line,int my_line);

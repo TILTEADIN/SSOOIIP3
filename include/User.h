@@ -1,4 +1,7 @@
+#pragma once
 #include <string>
+#include <queue>
+#include "../include/SearchRequest.h"
 
 class User {
     private:
@@ -9,13 +12,12 @@ class User {
         std::string requestedWord;
 
     public:
-        User(int id, int initialCredit, bool isVip, std::string requestedWord);
+        User(int id, int initialCredit, bool isVip, std::queue<SearchRequest> searchRequestQueue);
 
         int getInitialCredit();
         int getCurrentCredit();
         int getId();
         bool getIsVip();
         std::string getRequestedWord();
-
         void setCurrentCredit(int currentCredit);
 };
