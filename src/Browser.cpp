@@ -47,7 +47,8 @@ Browser::Browser(std::mutex *mtx, User* user) {
 Browser::~Browser(){}
 
 void Browser::operator()() {
-	mainBrowser();
+	//std::cout << " [BG] estoy en el browser" << std::endl;
+    mainBrowser();
 }
 
 int numberFilesToRead() {
@@ -70,7 +71,7 @@ int numberFilesToRead() {
 void Browser::mainBrowser() {
     std::string path = "prueba.txt";
     std::string completePath = MATERIAL_PATH + path;
-
+    
     if(readFile(completePath) != 0){
         std::cout << BHIRED << " [BR] Error reading file" << BHIWHITE << std::endl; 
     }
@@ -113,9 +114,10 @@ void Browser::findWord(std::string eachLine, int myLine){
     
     while (getline(strStream, str,' '))
 		lineVector.push_back(str);
-
+        
     for (unsigned int i = 0; i < lineVector.size(); i++) {
         eachWord = lineVector.at(i);
+        
         
         if (caseInsensitive(eachWord,objectiveWord)){
             
@@ -131,6 +133,7 @@ void Browser::findWord(std::string eachLine, int myLine){
                 previousWord = lineVector.at(i-1);
                 word_next = lineVector.at(i+1);
             }
+            std::cout<<previousWord<<" "<<eachWord<<" "<<word_next;
             Result foundResult(previousWord, word_next, eachWord, (myLine+1));
             std::lock_guard<std::mutex> lock(*mtx);
             result_list.push_back(foundResult);

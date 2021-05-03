@@ -55,8 +55,9 @@ int main(int argc, char *argv[]) {
     }
 
     std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
-    pgThread.detach();
-    
+
+    end=true;
+
     return 0;
 }   
 #endif

@@ -17,6 +17,7 @@
 #define MAX_LEN 256
 #define MATERIAL_PATH "material/"
 
+bool end = false;
 std::condition_variable cv;
 std::mutex rechargeCreditRequestMutex, paymentGatewayMutex;
 std::queue<User*> rechargeCreditRequestQueue;
