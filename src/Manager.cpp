@@ -1,5 +1,8 @@
-#include "PaymentGateway.cpp"
-#include "../include/Browser.h"
+#ifndef MANAGER
+#define MANAGER
+#include "../src/PaymentGateway.cpp"
+#include "../src/Browser.cpp"
+
 
 std::vector<std::string> diccionary = {"cuadro","presidente","vendendores","titulo","precio","castillo"};
 
@@ -56,3 +59,4 @@ int main(int argc, char *argv[]) {
     
     return 0;
 }   
+#endif

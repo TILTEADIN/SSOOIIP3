@@ -1,7 +1,11 @@
+#ifndef _PAYMENT_GATEWAY_
+#define _PAYMENT_GATEWAY_
+
 #include <iostream>
 #include <condition_variable>
 #include <queue>
 #include <thread>
+
 
 #include "../include/definitions.h"
 
@@ -42,4 +46,4 @@ public:
         }
     }
 };
-
+#endif

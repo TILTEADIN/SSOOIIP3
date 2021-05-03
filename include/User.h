@@ -1,6 +1,6 @@
-#pragma once
 #include <string>
 #include <queue>
+
 #include "../include/SearchRequest.h"
 
 class User {

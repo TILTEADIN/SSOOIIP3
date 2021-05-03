@@ -1,3 +1,6 @@
+#ifndef _BROWSER_
+#define _BROWSER_
+
 #include <ctype.h>
 #include <fstream>
 #include <iostream>
@@ -12,9 +15,28 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#include "../include/Browser.h"
-#include "../include/Result.h"
+
 #include "../include/definitions.h"
+#include "../src/Result.cpp"
+
+class Browser {
+    private:
+        std::mutex *mtx;
+
+    public:
+        User *user;
+        std::list<Result> result_list;
+
+        Browser(std::mutex *mtx, User* user);
+        ~Browser();
+
+        int readFile(std::string path);
+        void findWord(std::string each_line,int my_line);
+        void skipText(std::ifstream& in_file,int task_begin,char delim);
+        bool caseInsensitive(std::string each_word, std::string objective_word);
+        void mainBrowser();
+        void operator()();
+};
 
 Browser::Browser(std::mutex *mtx, User* user) {
     this->mtx = mtx;
@@ -140,3 +162,4 @@ bool Browser::caseInsensitive(std::string each_word, std::string objective_word)
 
     return check;
 }
+#endif

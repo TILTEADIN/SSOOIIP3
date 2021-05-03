@@ -1,4 +1,16 @@
-#include "../include/SearchRequest.h"
+#ifndef _SEARCH_REQUEST_
+#define _SEARCH_REQUEST_
+#include <string>
+
+class SearchRequest {
+    private:
+        int id;
+        std::string requestedWord;
+    public:
+        SearchRequest(int id, std::string requestedWord);
+        int getId();
+        std::string getRequestedWord();
+};
 
 SearchRequest::SearchRequest(int id ,std::string requestedWord){
     this->id = id;
@@ -12,3 +24,4 @@ std::string SearchRequest::getRequestedWord(){
 int SearchRequest::getId() {
     return this->id;
 }
+#endif

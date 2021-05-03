@@ -1,11 +1,12 @@
-#pragma once
-
 #include <string>
 #include <thread>
 #include <mutex>
 #include <shared_mutex>
 #include <list>
 
+
+#ifndef _BROWSER_
+#define _BROWSER_
 #include "../include/User.h"
 #include "../include/Result.h"
 
@@ -27,3 +28,4 @@ class Browser {
         void mainBrowser();
         void operator()();
 };
+#endif

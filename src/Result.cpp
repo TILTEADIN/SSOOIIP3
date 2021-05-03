@@ -1,10 +1,25 @@
+#ifndef _RESULT_
+#define _RESULT_
 #include <iostream>
 #include <fstream>
 #include <thread>
 #include <string>
 
-#include "../include/Result.h"
-#include "../include/definitions.h"
+class Result{
+    private:
+        int line;
+        std::string word_previous;
+        std::string word_next;
+        std::string word_objective;
+
+    public:
+        Result(std::string word_previous,std::string word_next,std::string word_objective,int line);
+        ~Result();
+        int getLine();
+        std::string getWord_previous();
+        std::string getWord_next();
+        std::string getWord_objective();
+};
 
 /* Class used for storing the Results found along the texts */
 Result::Result(std::string word_previous, std::string word_next, std::string word_objective, int line){
@@ -20,3 +35,4 @@ std::string Result::getWord_previous(){return word_previous;}
 std::string Result::getWord_next(){return word_next;}
 std::string Result::getWord_objective(){return word_objective;}
 int Result::getLine(){return line;}
+#endif

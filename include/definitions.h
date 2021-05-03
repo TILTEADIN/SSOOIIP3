@@ -1,3 +1,5 @@
+#ifndef DEFI
+#define DEFI
 #include <cstdlib>
 #include <ctime>
 #include <condition_variable>
@@ -7,8 +9,8 @@
 #include <functional>
 #include <vector>
 
-#include "../include/User.h"
 #include "../include/colors.h"
+#include "../src/User.cpp"
 
 #define MAXIMUM_CREDIT 15
 #define NUM_CLIENTS 3
@@ -23,3 +25,4 @@ int generateRandomNumber(int max){
   srand((unsigned) time(0));
   return ((rand() % max) + 1);
 }
+#endif

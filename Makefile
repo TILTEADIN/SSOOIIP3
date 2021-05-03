@@ -12,7 +12,7 @@ dirs:
 	mkdir -p $(DIREXE)
 
 manager: $(DIRSRC)Manager.cpp 
-	$(CC) $(DIRSRC)User.cpp -o $(DIREXE)$@ $^ $(LDLIBS) $(CFLAGS)
+	$(CC) -o $(DIREXE)$@ $^ $(LDLIBS) $(CFLAGS)
 
 run:
 	./$(DIREXE)manager
