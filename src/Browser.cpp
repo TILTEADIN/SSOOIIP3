@@ -16,8 +16,7 @@
 #include "../include/Result.h"
 #include "../include/definitions.h"
 
-Browser::Browser(std::mutex *mtx, User* user)
-{
+Browser::Browser(std::mutex *mtx, User* user) {
     this->mtx = mtx;
     std::list<Result> result_list;
     this->user= user;
@@ -25,16 +24,15 @@ Browser::Browser(std::mutex *mtx, User* user)
 
 Browser::~Browser(){}
 
-void Browser::operator()()
-{
-	main_Browser();
+void Browser::operator()() {
+	mainBrowser();
 }
 
 int numberFilesToRead() {
     DIR *dp;
     int numFiles = 0;
     struct dirent *ep;     
-    dp = opendir ("../material");
+    dp = opendir (MATERIAL_PATH);
 
     if (dp != NULL){
         while ((ep = readdir (dp)))
@@ -47,74 +45,73 @@ int numberFilesToRead() {
 }
 
 /*  */
-void Browser::main_Browser()
-{
-    //for (int i = 0; i < numberFilesToRead(); i++) {
-    //}
+void Browser::mainBrowser() {
+    std::string path = "prueba.txt";
+    std::string completePath = MATERIAL_PATH + path;
 
-    if(readFile(path) != 0){
+    if(readFile(completePath) != 0){
         std::cout << BHIRED << " [BR] Error reading file" << BHIWHITE << std::endl; 
     }
 }
 
 /* Reads the file and checks if there's some error */
-int Browser::readFile(std::string path,int task_begin,int task_end)
-{
-    std::ifstream in_file;
-    std::string each_line;
-    int my_line = task_begin;
+int Browser::readFile(std::string completePath) {
+    std::ifstream inFile;
+    std::string eachLine;
+    int numLine = 0;
 
-    in_file.open(path);
+    inFile.open(completePath);
 
-    if (!in_file) {
+    if (!inFile) {
         std::cout << BHIRED << " [BR] Unable to open the file" << BHIWHITE << std::endl; 
         exit(1); // terminate with error
     }
 
-    while (!(in_file.eof()) && (task_end > my_line)) {
-        getline(in_file,each_line);
-        findWord(each_line,my_line);
-        my_line++;
+    while (!inFile.eof()) {
+        std::getline(inFile,eachLine);
+        findWord(eachLine,numLine);
+        numLine++;
     }
 
-    in_file.close();
+    inFile.close();
     return 0;
 }
 
 /* Method used for finding a word within a given string */
-void Browser::findWord(std::string each_line, int my_line){
+void Browser::findWord(std::string eachLine, int myLine){
 	 
-	std::string word_previous = "",word_next="";
-	std::string objective_word = user->getRequestedWord();
-    std::string each_word;  
+	std::string previousWord = "",word_next="";
+	std::string objectiveWord = user->searchRequestQueue.front().getRequestedWord();
+    user->searchRequestQueue.pop();
+    std::string eachWord;  
     std::string str;
 
-	std::istringstream str_stream(each_line);
-	std::vector<std::string> line_vector;
+	std::istringstream strStream(eachLine);
+	std::vector<std::string> lineVector;
     
-    while (getline(str_stream, str,' '))
-		line_vector.push_back(str);
+    while (getline(strStream, str,' '))
+		lineVector.push_back(str);
 
-    for (unsigned int i = 0; i < line_vector.size(); i++) {
-        each_word = line_vector.at(i);
+    for (unsigned int i = 0; i < lineVector.size(); i++) {
+        eachWord = lineVector.at(i);
         
-        if(caseInsensitive(each_word,objective_word)){
+        if (caseInsensitive(eachWord,objectiveWord)){
             
-            if(i == 0){
-                word_previous = "";
-                word_next = line_vector.at(i+1);
+            if (i == 0){
+                previousWord = "";
+                word_next = lineVector.at(i+1);
 
-            }else if(i == line_vector.size()-1){
+            } else if(i == lineVector.size()-1){
                 word_next = "";
-                word_previous = line_vector.at(i-1);
+                previousWord = lineVector.at(i-1);
 
-            }else{
-                word_previous = line_vector.at(i-1);
-                word_next = line_vector.at(i+1);
+            } else{
+                previousWord = lineVector.at(i-1);
+                word_next = lineVector.at(i+1);
             }
-            Result result_s(word_previous, word_next, each_word, (my_line+1));
+            Result foundResult(previousWord, word_next, eachWord, (myLine+1));
             std::lock_guard<std::mutex> lock(*mtx);
-            result_list.push_back(result_s);
+            result_list.push_back(foundResult);
         }
 	}
 }

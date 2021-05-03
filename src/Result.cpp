@@ -1,11 +1,12 @@
-#include "../include/Result.h"
-#include "../include/definitions.h"
 #include <iostream>
 #include <fstream>
 #include <thread>
 #include <string>
 
-//Class used for storing the Results found along the texts
+#include "../include/Result.h"
+#include "../include/definitions.h"
+
+/* Class used for storing the Results found along the texts */
 Result::Result(std::string word_previous, std::string word_next, std::string word_objective, int line){
 	this->word_previous = word_previous;
 	this->word_next = word_next;

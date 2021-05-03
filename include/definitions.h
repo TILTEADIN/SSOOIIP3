@@ -8,16 +8,12 @@
 #include <vector>
 
 #include "../include/User.h"
-#include "../include/Browser.h"
-#include "../include/Result.h"
-#include "../include/SearchRequest.h"
 #include "../include/colors.h"
-#include "../include/User.h"
-
 
 #define MAXIMUM_CREDIT 15
 #define NUM_CLIENTS 3
 #define MAX_LEN 256
+#define MATERIAL_PATH "material/"
 
 std::condition_variable cv;
 std::mutex rechargeCreditRequestMutex, paymentGatewayMutex;

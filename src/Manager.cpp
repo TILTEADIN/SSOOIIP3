@@ -1,8 +1,9 @@
-
 #include "PaymentGateway.cpp"
+#include "../include/Browser.h"
 
-std::vector<std::string> diccionary = {"cuadro","presidente","vendendores","titulo","precio"};
+std::vector<std::string> diccionary = {"cuadro","presidente","vendendores","titulo","precio","castillo"};
 
+//ESTE METODO TIENE QUE ESTAR EN BROWSER o en definitions
 /* Request to payment service to recharge credit of a given user */
 void requestCreditRecharge(User *user) {
     rechargeCreditRequestMutex.lock();

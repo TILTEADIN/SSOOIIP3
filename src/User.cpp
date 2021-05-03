@@ -1,5 +1,4 @@
 #include "../include/User.h"
-#include <queue>
 
 //Cada usuario tiene asociada una peticion, de manera que nos ahorramos crear clases con poca responsabilidad
 User::User(int id ,int initialCredit, bool isVip,std::queue<SearchRequest> searchRequestQueue){
@@ -7,8 +6,9 @@ User::User(int id ,int initialCredit, bool isVip,std::queue<SearchRequest> searc
     this->currentCredit = initialCredit; //el saldo en el momento de la creación es el saldo incial
     this->id = id;
     this->isVip = isVip;
-    this->requestedWord = searchRequestQueue.front().getRequestedWord();
-    searchRequestQueue.pop();
+    this->searchRequestQueue = searchRequestQueue;
+    //this->requestedWord = searchRequestQueue.front().getRequestedWord();
+    //searchRequestQueue.pop();
 }
 
 int User::getInitialCredit(){
@@ -26,10 +26,10 @@ int User::getId(){
 bool User::getIsVip(){
     return isVip;
 }
-
+/*
 std::string User::getRequestedWord(){
     return requestedWord;
-}
+}*/
 
 void User::setCurrentCredit(int currentCredit){
     this->currentCredit = currentCredit;
