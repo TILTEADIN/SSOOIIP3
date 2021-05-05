@@ -10,26 +10,28 @@ class User {
 		int initialCredit;
 		int currentCredit;
 		bool isVip;
+		std::string requestedWord;
 		//std::string requestedWord;
 
 	public:
-		std::queue<SearchRequest> searchRequestQueue;
-		User(int id, int initialCredit, bool isVip, std::queue<SearchRequest> searchRequestQueue);
+		//std::queue<SearchRequest> searchRequestQueue;
+		User(int id, int initialCredit, bool isVip, std::string requestedWord);
 
 		int getInitialCredit();
 		int getCurrentCredit();
 		int getId();
 		bool getIsVip();
-		//std::string getRequestedWord();
+		std::string getRequestedWord();
 		void setCurrentCredit(int currentCredit);
+		
 };
 
-	User::User(int id ,int initialCredit, bool isVip,std::queue<SearchRequest> searchRequestQueue){
+	User::User(int id ,int initialCredit, bool isVip,std::string requestedWord){
 		this->initialCredit = 0;
 		this->currentCredit = initialCredit; //el saldo en el momento de la creación es el saldo incial
 		this->id = id;
 		this->isVip = isVip;
-		this->searchRequestQueue = searchRequestQueue;
+		this->requestedWord = requestedWord;
 		//this->requestedWord = searchRequestQueue.front().getRequestedWord();
 		//searchRequestQueue.pop();
 	}
@@ -49,10 +51,10 @@ class User {
 	bool User::getIsVip(){
 		return isVip;
 	}
-	/*
+	
 	std::string User::getRequestedWord(){
 		return requestedWord;
-	}*/
+	}
 
 	void User::setCurrentCredit(int currentCredit){
 		this->currentCredit = currentCredit;

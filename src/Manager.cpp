@@ -61,15 +61,16 @@ int main(int argc, char *argv[]) {
     installSignalHandler();
     /* Launch payment service */
     PaymentGateway pg;
-    std::thread pgThread(pg);
+    std::thread pgThread(std::ref(pg));
+
     std::vector<User> clients;
     std::vector<std::thread> threads;
 
     for (int i = 0; i < NUM_CLIENTS; i++) {
         //std::cout << i << std::endl;
-        std::queue<SearchRequest> searchRequestQueue;
-        searchRequestQueue.push(SearchRequest(i,selectRandomWord()));
-        clients.push_back(User(i, generateRandomNumber(MAXIMUM_CREDIT), generateIsVip(), searchRequestQueue));
+        //std::queue<SearchRequest> searchRequestQueue1;
+        //searchRequestQueue1.push(SearchRequest(i,selectRandomWord()));
+        clients.push_back(User(i, generateRandomNumber(MAXIMUM_CREDIT), generateIsVip(), selectRandomWord()));
         std::mutex sem;
         threads.push_back(std::thread(Browser(&sem, &clients[i])));
     }

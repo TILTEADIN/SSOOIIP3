@@ -41,7 +41,7 @@ class Browser {
 Browser::Browser(std::mutex *mtx, User* user) {
     this->mtx = mtx;
     this->user= user;
-    this->objectiveWord = user->searchRequestQueue.front().getRequestedWord();
+    this->objectiveWord = user->getRequestedWord();
     std::vector<Result> result_list;
     //user->searchRequestQueue.pop();
 }
@@ -93,16 +93,19 @@ void Browser::mainBrowser() {
         std::string fileName = filesNames[i];
         std::string completePath = MATERIAL_PATH + fileName;
         searchers.push_back(std::thread([completePath, fileName, this] {readFile(completePath, fileName);}));
+        //aqui añadir la peticion de busqueda.??
     }
 
-push de la cola
+
 
     std::for_each(searchers.begin(), searchers.end(), std::mem_fn(&std::thread::join));
 
+    //aqui utilizar promise and uture para sincronizar todoos los hijos
+    //RECORDAR: utilizar promise y future para propagar las excepciones 
     //Aqui escribirá en un archivo para cada usuario.
     if (result_list.size() != 0) {
         for (int i = 0; i < result_list.size(); i++) {
-            std::cout << BHIYELLOW << " [BGCHLD] Usuario: " << user->getId() << " - archivo: " << result_list[i].getFileName() << " - " 
+            std::cout << BHIYELLOW << " [BRCHLD] Usuario: " << user->getId() << " - archivo: " << result_list[i].getFileName() << " - " 
                 << "linea: " << result_list[i].getLine() << ": " 
                 << result_list[i].getPreviousWord() << " " 
                 << result_list[i].getObjectiveWord() << " "
@@ -136,7 +139,7 @@ int Browser::readFile(std::string completePath, std::string fileName) {
 
     std::unique_lock<std::mutex> ul(searchRequestMutex);
 
-    searchRequestCV.wait(ul,[] {return (searchRequestQueue.size()<NUM_CLIENTS);});
+    searchRequestCV.wait(ul,[] {return (searchRequestQueue.size() < N_SEARCH_MAX);});
     
     while (!inFile.eof()) {
         std::getline(inFile,eachLine);

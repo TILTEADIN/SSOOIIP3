@@ -8,13 +8,15 @@
 #include <algorithm>
 #include <functional>
 #include <vector>
+#include <unistd.h>
 
 #include "../include/colors.h"
 #include "../src/User.cpp"
 
 #define MAXIMUM_CREDIT 15
-#define NUM_CLIENTS 2
+#define NUM_CLIENTS 3
 #define MAX_LEN 256
+#define N_SEARCH_MAX 2
 #define MATERIAL_PATH "material2/"
 
 std::queue<SearchRequest> searchRequestQueue;
@@ -24,6 +26,7 @@ std::mutex rechargeCreditRequestMutex, paymentGatewayMutex, searchRequestMutex, 
 std::queue<User*> rechargeCreditRequestQueue;
 
 int generateRandomNumber(int max){
+  usleep(3000);
   srand((unsigned) time(0));
   return ((rand() % max) + 1);
 }
