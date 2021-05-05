@@ -17,7 +17,7 @@ void requestCreditRecharge(User *user) {
                 " requests a credit top up " << BHIWHITE << std::endl;
 
     rechargeCreditRequestQueue.push(user);
-    cv.notify_one();
+    paymentGatewayCV.notify_one();
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     std::cout << BHIGREEN << " [MG] User's credit" << user->getId() << " topped up to " 
         << user->getCurrentCredit() << " credits." << BHIWHITE << std::endl;
@@ -43,7 +43,7 @@ bool generateIsVip() {
 
 /* Signal handler */
 void signalHandler(int signum) {
-    std::cout << BHIGREEN << " [MG] Exit program (Ctrl+C)..." << BHIWHITE << std::endl;
+    std::cout << BHIGREEN << "\n [MG] Exit program (Ctrl+C)..." << BHIWHITE << std::endl;
     std::exit(EXIT_SUCCESS);
 }
 

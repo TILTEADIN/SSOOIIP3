@@ -43,7 +43,7 @@ Browser::Browser(std::mutex *mtx, User* user) {
     this->user= user;
     this->objectiveWord = user->searchRequestQueue.front().getRequestedWord();
     std::vector<Result> result_list;
-    user->searchRequestQueue.pop();
+    //user->searchRequestQueue.pop();
 }
 
 Browser::~Browser(){}
@@ -79,7 +79,7 @@ int numberFilesToRead(std::vector<std::string> &filesNames) {
     return numFiles; 
 }
 
-/* Launch the browser childs for each file in material directory */
+/* Launch the browser children for each file in material directory */
 void Browser::mainBrowser() {
     std::vector<std::string> filesNames;
     std::vector<std::thread> searchers;
@@ -94,6 +94,8 @@ void Browser::mainBrowser() {
         std::string completePath = MATERIAL_PATH + fileName;
         searchers.push_back(std::thread([completePath, fileName, this] {readFile(completePath, fileName);}));
     }
+
+push de la cola
 
     std::for_each(searchers.begin(), searchers.end(), std::mem_fn(&std::thread::join));
 
@@ -124,12 +126,29 @@ int Browser::readFile(std::string completePath, std::string fileName) {
         exit(1); // terminate with error
     }
 
+    searchRequestQueueMutex.lock();
+    SearchRequest rq(this->user->getId(),this->objectiveWord);
+    searchRequestQueue.push(rq);
+        std::cout << "El tamaño de la cola es: "<<searchRequestQueue.size() << std::endl;
+
+    //std::cout << "entro en el primer lock/unlock" << std::endl;
+    searchRequestQueueMutex.unlock();
+
+    std::unique_lock<std::mutex> ul(searchRequestMutex);
+
+    searchRequestCV.wait(ul,[] {return (searchRequestQueue.size()<NUM_CLIENTS);});
+    
     while (!inFile.eof()) {
         std::getline(inFile,eachLine);
         findWord(eachLine,numLine,fileName);
         numLine++;
     }
-
+    ul.unlock();
+    //searchRequestQueueMutex.lock();
+    //std::cout << "esntro en el segundo lock unlock" << std::endl;
+    searchRequestQueue.pop();
+    searchRequestCV.notify_one();
+    //searchRequestQueueMutex.unlock();
     inFile.close();
 
     return 0;

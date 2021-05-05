@@ -17,8 +17,10 @@
 #define MAX_LEN 256
 #define MATERIAL_PATH "material2/"
 
-std::condition_variable cv;
-std::mutex rechargeCreditRequestMutex, paymentGatewayMutex;
+std::queue<SearchRequest> searchRequestQueue;
+std::condition_variable searchRequestCV;
+std::condition_variable paymentGatewayCV;
+std::mutex rechargeCreditRequestMutex, paymentGatewayMutex, searchRequestMutex, searchRequestQueueMutex;
 std::queue<User*> rechargeCreditRequestQueue;
 
 int generateRandomNumber(int max){

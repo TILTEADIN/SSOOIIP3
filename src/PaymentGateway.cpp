@@ -26,7 +26,7 @@ public:
         std::cout << BHICYAN << " [PG] Waiting for top up requests... " << BHIWHITE << std::endl;
         while (1) {
             std::unique_lock<std::mutex> ul(paymentGatewayMutex);
-            cv.wait(ul, [] {return (!rechargeCreditRequestQueue.empty());});
+            paymentGatewayCV.wait(ul, [] {return (!rechargeCreditRequestQueue.empty());});
 
             User *user = rechargeCreditRequestQueue.front();
             rechargeCreditRequestQueue.pop();
