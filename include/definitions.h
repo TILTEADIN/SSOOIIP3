@@ -13,11 +13,10 @@
 #include "../src/User.cpp"
 
 #define MAXIMUM_CREDIT 15
-#define NUM_CLIENTS 3
+#define NUM_CLIENTS 2
 #define MAX_LEN 256
-#define MATERIAL_PATH "material/"
+#define MATERIAL_PATH "material2/"
 
-bool end = false;
 std::condition_variable cv;
 std::mutex rechargeCreditRequestMutex, paymentGatewayMutex;
 std::queue<User*> rechargeCreditRequestQueue;

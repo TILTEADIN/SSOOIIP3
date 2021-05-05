@@ -1,10 +1,12 @@
 #ifndef MANAGER
 #define MANAGER
+
+#include <csignal>
+
 #include "../src/PaymentGateway.cpp"
 #include "../src/Browser.cpp"
 
-
-std::vector<std::string> diccionary = {"cuadro","presidente","vendendores","titulo","precio","castillo"};
+std::vector<std::string> diccionary = {"prueba","cuadro","presidente","vendedores","titulo","precio","castillo"};
 
 //ESTE METODO TIENE QUE ESTAR EN BROWSER o en definitions
 /* Request to payment service to recharge credit of a given user */
@@ -23,8 +25,10 @@ void requestCreditRecharge(User *user) {
 
 /* Select a random word for the diccionary */
 std::string selectRandomWord() {
-    int num = generateRandomNumber(diccionary.size());
-    return diccionary[num];
+    int num = generateRandomNumber(diccionary.size())-1;
+    std::string word = diccionary[num];
+    diccionary.erase(diccionary.begin()+num); /* Delete the chosen word from diccionary */
+    return word;
 }
 
 /* Generate if user is vip or not */
@@ -37,9 +41,24 @@ bool generateIsVip() {
     return isVip;
 }
 
+/* Signal handler */
+void signalHandler(int signum) {
+    std::cout << BHIGREEN << " [MG] Exit program (Ctrl+C)..." << BHIWHITE << std::endl;
+    std::exit(EXIT_SUCCESS);
+}
+
+/* Install signal handler */
+void installSignalHandler() {
+    if (signal(SIGINT, signalHandler) == SIG_ERR) {
+        std::cerr << BHIRED << " [MG] Error installing signal handler" << BHIWHITE << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+}
+
 /* Main function */
 int main(int argc, char *argv[]) {
-
+    /* Install signal handler*/
+    installSignalHandler();
     /* Launch payment service */
     PaymentGateway pg;
     std::thread pgThread(pg);
@@ -47,6 +66,7 @@ int main(int argc, char *argv[]) {
     std::vector<std::thread> threads;
 
     for (int i = 0; i < NUM_CLIENTS; i++) {
+        //std::cout << i << std::endl;
         std::queue<SearchRequest> searchRequestQueue;
         searchRequestQueue.push(SearchRequest(i,selectRandomWord()));
         clients.push_back(User(i, generateRandomNumber(MAXIMUM_CREDIT), generateIsVip(), searchRequestQueue));
@@ -56,7 +76,7 @@ int main(int argc, char *argv[]) {
 
     std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
 
-    end=true;
+    pgThread.detach();
 
     return 0;
 }   

@@ -6,11 +6,11 @@
 #include <queue>
 #include <thread>
 
-
 #include "../include/definitions.h"
 
 class PaymentGateway {
 public:
+
     PaymentGateway(){};
 
     ~PaymentGateway(){
@@ -24,9 +24,9 @@ public:
     void waitRequest() {
 
         std::cout << BHICYAN << " [PG] Waiting for top up requests... " << BHIWHITE << std::endl;
-        while (!end) {
+        while (1) {
             std::unique_lock<std::mutex> ul(paymentGatewayMutex);
-            cv.wait(ul, [] {return (!rechargeCreditRequestQueue.empty() && !end);});
+            cv.wait(ul, [] {return (!rechargeCreditRequestQueue.empty());});
 
             User *user = rechargeCreditRequestQueue.front();
             rechargeCreditRequestQueue.pop();
@@ -45,5 +45,9 @@ public:
             rechargeCreditRequestMutex.unlock();
         }
     }
+    
+
+
+
 };
 #endif

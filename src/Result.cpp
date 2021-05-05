@@ -8,31 +8,50 @@
 class Result{
     private:
         int line;
-        std::string word_previous;
-        std::string word_next;
-        std::string word_objective;
+        std::string previousWord;
+        std::string nextWord;
+        std::string objectiveWord;
+        std::string fileName;
 
     public:
-        Result(std::string word_previous,std::string word_next,std::string word_objective,int line);
+        Result(std::string previousWord, std::string nextWord, std::string objectiveWord, int line, std::string fileName);
         ~Result();
         int getLine();
-        std::string getWord_previous();
-        std::string getWord_next();
-        std::string getWord_objective();
+        std::string getPreviousWord();
+        std::string getNextWord();
+        std::string getObjectiveWord();
+        std::string getFileName();
 };
 
 /* Class used for storing the Results found along the texts */
-Result::Result(std::string word_previous, std::string word_next, std::string word_objective, int line){
-	this->word_previous = word_previous;
-	this->word_next = word_next;
-        this->word_objective = word_objective;
-        this->line = line;
+Result::Result(std::string previousWord, std::string nextWord, std::string objectiveWord, int line, std::string fileName) {
+    this->previousWord = previousWord;
+    this->nextWord = nextWord;
+    this->objectiveWord = objectiveWord;
+    this->line = line;
+    this->fileName = fileName;
 }
 
 Result::~Result(){}
 
-std::string Result::getWord_previous(){return word_previous;}
-std::string Result::getWord_next(){return word_next;}
-std::string Result::getWord_objective(){return word_objective;}
-int Result::getLine(){return line;}
+std::string Result::getPreviousWord(){
+    return this->previousWord;
+}
+
+std::string Result::getNextWord(){
+    return this->nextWord;
+}
+
+std::string Result::getObjectiveWord(){
+    return this->objectiveWord;
+}
+
+int Result::getLine() {
+    return this->line;
+}
+
+std::string Result::getFileName() {
+    return this->fileName;
+}
+
 #endif

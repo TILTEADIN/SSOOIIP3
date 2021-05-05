@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <dirent.h>
-
+#include <string.h>
 
 #include "../include/definitions.h"
 #include "../src/Result.cpp"
@@ -22,63 +22,97 @@
 class Browser {
     private:
         std::mutex *mtx;
+        std::string objectiveWord;
 
     public:
         User *user;
-        std::list<Result> result_list;
+        std::vector<Result> result_list;
 
         Browser(std::mutex *mtx, User* user);
         ~Browser();
 
-        int readFile(std::string path);
-        void findWord(std::string each_line,int my_line);
-        void skipText(std::ifstream& in_file,int task_begin,char delim);
-        bool caseInsensitive(std::string each_word, std::string objective_word);
+        int readFile(std::string completePath, std::string fileName);
+        void findWord(std::string eachLine, int myLine, std::string fileName);
+        bool caseInsensitive(std::string eachWord, std::string objectiveWord);
         void mainBrowser();
         void operator()();
 };
 
 Browser::Browser(std::mutex *mtx, User* user) {
     this->mtx = mtx;
-    std::list<Result> result_list;
     this->user= user;
+    this->objectiveWord = user->searchRequestQueue.front().getRequestedWord();
+    std::vector<Result> result_list;
+    user->searchRequestQueue.pop();
 }
 
 Browser::~Browser(){}
 
+/* Returns the type of user */
+//int getTypeOfUser() {
+
+//}
+
 void Browser::operator()() {
-	//std::cout << " [BG] estoy en el browser" << std::endl;
     mainBrowser();
 }
 
-int numberFilesToRead() {
+/* Returns the number of files on the material directory */
+int numberFilesToRead(std::vector<std::string> &filesNames) {
     DIR *dp;
     int numFiles = 0;
-    struct dirent *ep;     
+    struct dirent *ep;
     dp = opendir (MATERIAL_PATH);
 
     if (dp != NULL){
-        while ((ep = readdir (dp)))
-            numFiles++;
+        while ((ep = readdir (dp))) {
+            /* Don't include . and .. directories */
+            if (strcmp(ep->d_name, ".") && strcmp(ep->d_name, "..")) { 
+                filesNames.push_back(ep->d_name);
+                numFiles++;
+            }
+        }
         (void) closedir (dp);
     }else
         std::cout << BHIRED << " [BR] Couldn't open the directory" << BHIWHITE << std::endl;
 
-    return numFiles;
+    return numFiles; 
 }
 
-/*  */
+/* Launch the browser childs for each file in material directory */
 void Browser::mainBrowser() {
-    std::string path = "prueba.txt";
-    std::string completePath = MATERIAL_PATH + path;
-    
-    if(readFile(completePath) != 0){
-        std::cout << BHIRED << " [BR] Error reading file" << BHIWHITE << std::endl; 
+    std::vector<std::string> filesNames;
+    std::vector<std::thread> searchers;
+
+    int numFiles = numberFilesToRead(filesNames);
+
+    std::cout << BHIYELLOW << " [BG] Palabra a buscar para el usuario " << user->getId() <<
+                             ": " << objectiveWord << BHIWHITE << std::endl;
+
+    for (int i = 0; i < numFiles; i++) {
+        std::string fileName = filesNames[i];
+        std::string completePath = MATERIAL_PATH + fileName;
+        searchers.push_back(std::thread([completePath, fileName, this] {readFile(completePath, fileName);}));
+    }
+
+    std::for_each(searchers.begin(), searchers.end(), std::mem_fn(&std::thread::join));
+
+    //Aqui escribirá en un archivo para cada usuario.
+    if (result_list.size() != 0) {
+        for (int i = 0; i < result_list.size(); i++) {
+            std::cout << BHIYELLOW << " [BGCHLD] Usuario: " << user->getId() << " - archivo: " << result_list[i].getFileName() << " - " 
+                << "linea: " << result_list[i].getLine() << ": " 
+                << result_list[i].getPreviousWord() << " " 
+                << result_list[i].getObjectiveWord() << " "
+                << result_list[i].getNextWord() << BHIWHITE << std::endl;
+        }
+    } else {
+        std::cout << "No se ha encontrado resultados" << std::endl; 
     }
 }
 
 /* Reads the file and checks if there's some error */
-int Browser::readFile(std::string completePath) {
+int Browser::readFile(std::string completePath, std::string fileName) {
     std::ifstream inFile;
     std::string eachLine;
     int numLine = 0;
@@ -92,20 +126,22 @@ int Browser::readFile(std::string completePath) {
 
     while (!inFile.eof()) {
         std::getline(inFile,eachLine);
-        findWord(eachLine,numLine);
+        findWord(eachLine,numLine,fileName);
         numLine++;
     }
 
     inFile.close();
+
     return 0;
 }
 
 /* Method used for finding a word within a given string */
-void Browser::findWord(std::string eachLine, int myLine){
+void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
 	 
-	std::string previousWord = "",word_next="";
-	std::string objectiveWord = user->searchRequestQueue.front().getRequestedWord();
-    user->searchRequestQueue.pop();
+	std::string previousWord = "",nextWord = "";
+	//std::string objectiveWord = user->searchRequestQueue.front().getRequestedWord();
+    //std::cout << "objetivo " << objectiveWord << std::endl;
+    //user->searchRequestQueue.pop();
     std::string eachWord;  
     std::string str;
 
@@ -113,28 +149,28 @@ void Browser::findWord(std::string eachLine, int myLine){
 	std::vector<std::string> lineVector;
     
     while (getline(strStream, str,' '))
-		lineVector.push_back(str);
+		lineVector.push_back(str);;
         
     for (unsigned int i = 0; i < lineVector.size(); i++) {
         eachWord = lineVector.at(i);
+        //std::cout << eachWord << std::endl;
         
-        
-        if (caseInsensitive(eachWord,objectiveWord)){
+        if (caseInsensitive(eachWord,this->objectiveWord)){
             
             if (i == 0){
                 previousWord = "";
-                word_next = lineVector.at(i+1);
+                nextWord = lineVector.at(i+1);
 
             } else if(i == lineVector.size()-1){
-                word_next = "";
+                nextWord = "";
                 previousWord = lineVector.at(i-1);
 
             } else{
                 previousWord = lineVector.at(i-1);
-                word_next = lineVector.at(i+1);
+                nextWord = lineVector.at(i+1);
             }
-            std::cout<<previousWord<<" "<<eachWord<<" "<<word_next;
-            Result foundResult(previousWord, word_next, eachWord, (myLine+1));
+            //std::cout<<previousWord<<" "<<eachWord<<" "<<nextWord;
+            Result foundResult(previousWord, nextWord, eachWord, (myLine+1), fileName);
             std::lock_guard<std::mutex> lock(*mtx);
             result_list.push_back(foundResult);
         }
@@ -142,24 +178,26 @@ void Browser::findWord(std::string eachLine, int myLine){
 }
 
 /* Checks whether a word is or isnt upper case and if so transforms it */
-bool Browser::caseInsensitive(std::string each_word, std::string objective_word){
+bool Browser::caseInsensitive(std::string eachWord, std::string objectiveWord){
     bool check = false;
-    unsigned int c_correct = 0;
-    unsigned int len = each_word.size();
+    unsigned int cCorrect = 0;
+    unsigned int len = eachWord.size();
     
     for(unsigned int i = 0; i < len; i++){
 
-        if((((each_word[i]) == (tolower(objective_word[i]))) || ((each_word[i]) == (toupper(objective_word[i]))))  && (check == false)){
-            c_correct++;
+        if((((eachWord[i]) == (tolower(objectiveWord[i]))) || 
+            ((eachWord[i]) == (toupper(objectiveWord[i]))))  && 
+            (check == false)){
+            cCorrect++;
         }else{
-            if(ispunct(each_word[i])){  //Interesting method used to check if a character is ! , . ; and such
-                c_correct++;
+            if(ispunct(eachWord[i])){  //Interesting method used to check if a character is ! , . ; and such
+                cCorrect++;
             }
-            c_correct--;
+            cCorrect--;
         }
     }
 
-    if(c_correct == objective_word.size()){
+    if(cCorrect == objectiveWord.size()){
         check = true;
     }
 
