@@ -11,7 +11,6 @@
 class PaymentGateway {
 public:
 
-
     PaymentGateway(){};
 
     ~PaymentGateway(){
@@ -26,8 +25,8 @@ public:
         std::cout << BHICYAN << " [PG] Waiting for top up requests... " << BHIWHITE << std::endl;
         while (1) {
             std::unique_lock<std::mutex> ul(paymentGatewayMutex);
-            paymentGatewayCV.wait(ul, [] {return (!rechargeCreditRequestQueue.empty());});
-
+            paymentGatewayCV.wait(ul, [] {return (!rechargeCreditRequestQueue.empty() || endRequest);});
+            
             User *user = rechargeCreditRequestQueue.front();
             rechargeCreditRequestQueue.pop();
 
@@ -45,9 +44,5 @@ public:
             rechargeCreditRequestMutex.unlock();
         }
     }
-    
-
-
-
 };
 #endif

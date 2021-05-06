@@ -79,6 +79,27 @@ int numberFilesToRead(std::vector<std::string> &filesNames) {
     return numFiles; 
 }
 
+void addSearchRequest(User *user, std::string objectiveWord) {
+    std::unique_lock<std::mutex> ul(searchRequestMutex);
+    searchRequestCV.wait(ul,[] {return (searchRequestQueue.size() < N_SEARCH_MAX);});
+    
+    SearchRequest rq(user->getId(),objectiveWord);
+    searchRequestQueue.push(rq);
+    std::cout << BHIYELLOW << " [BR] La cola de peticiones tiene " << 
+            (N_SEARCH_MAX - searchRequestQueue.size()) << " huecos disponibles" << 
+            " (peticion del usuario " << user->getId() << ")" << BHIWHITE << std::endl;
+    ul.unlock();
+}
+
+void removeSearchRequest(User *user, std::string objectiveWord) {
+    searchRequestQueueMutex.lock();
+    searchRequestQueue.pop();
+    std::cout << BHIYELLOW << " [BR] Búsqueda de la palabra '" << objectiveWord << 
+            "' (Usuario " <<  user->getId() << ") a finalizado" << BHIWHITE << std::endl;
+    searchRequestCV.notify_one();
+    searchRequestQueueMutex.unlock();
+}
+
 /* Launch the browser children for each file in material directory */
 void Browser::mainBrowser() {
     std::vector<std::string> filesNames;
@@ -87,25 +108,28 @@ void Browser::mainBrowser() {
     int numFiles = numberFilesToRead(filesNames);
 
     std::cout << BHIYELLOW << " [BG] Palabra a buscar para el usuario " << user->getId() <<
-                             ": " << objectiveWord << BHIWHITE << std::endl;
+                             ": '" << objectiveWord << "'" << BHIWHITE << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
+    addSearchRequest(this->user, this->objectiveWord);
+
+    /* Launch as many threads as files in material directory */
     for (int i = 0; i < numFiles; i++) {
         std::string fileName = filesNames[i];
-        std::string completePath = MATERIAL_PATH + fileName;
+        std::string completePath = MATERIAL_PATH + fileName;        
         searchers.push_back(std::thread([completePath, fileName, this] {readFile(completePath, fileName);}));
-        //aqui añadir la peticion de busqueda.??
     }
 
-
-
     std::for_each(searchers.begin(), searchers.end(), std::mem_fn(&std::thread::join));
+
+    removeSearchRequest(this->user, this->objectiveWord);
 
     //aqui utilizar promise and uture para sincronizar todoos los hijos
     //RECORDAR: utilizar promise y future para propagar las excepciones 
     //Aqui escribirá en un archivo para cada usuario.
     if (result_list.size() != 0) {
         for (int i = 0; i < result_list.size(); i++) {
-            std::cout << BHIYELLOW << " [BRCHLD] Usuario: " << user->getId() << " - archivo: " << result_list[i].getFileName() << " - " 
+            std::cout << BHIPURPLE << " [BR] [RESULTS] Usuario: " << user->getId() << " - archivo: " << result_list[i].getFileName() << " - " 
                 << "linea: " << result_list[i].getLine() << ": " 
                 << result_list[i].getPreviousWord() << " " 
                 << result_list[i].getObjectiveWord() << " "
@@ -126,32 +150,16 @@ int Browser::readFile(std::string completePath, std::string fileName) {
 
     if (!inFile) {
         std::cout << BHIRED << " [BR] Unable to open the file" << BHIWHITE << std::endl; 
-        exit(1); // terminate with error
+        std::exit(EXIT_FAILURE); /* terminate with error */
     }
 
-    searchRequestQueueMutex.lock();
-    SearchRequest rq(this->user->getId(),this->objectiveWord);
-    searchRequestQueue.push(rq);
-        std::cout << "El tamaño de la cola es: "<<searchRequestQueue.size() << std::endl;
-
-    //std::cout << "entro en el primer lock/unlock" << std::endl;
-    searchRequestQueueMutex.unlock();
-
-    std::unique_lock<std::mutex> ul(searchRequestMutex);
-
-    searchRequestCV.wait(ul,[] {return (searchRequestQueue.size() < N_SEARCH_MAX);});
-    
     while (!inFile.eof()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         std::getline(inFile,eachLine);
         findWord(eachLine,numLine,fileName);
         numLine++;
     }
-    ul.unlock();
-    //searchRequestQueueMutex.lock();
-    //std::cout << "esntro en el segundo lock unlock" << std::endl;
-    searchRequestQueue.pop();
-    searchRequestCV.notify_one();
-    //searchRequestQueueMutex.unlock();
+    
     inFile.close();
 
     return 0;
@@ -161,9 +169,6 @@ int Browser::readFile(std::string completePath, std::string fileName) {
 void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
 	 
 	std::string previousWord = "",nextWord = "";
-	//std::string objectiveWord = user->searchRequestQueue.front().getRequestedWord();
-    //std::cout << "objetivo " << objectiveWord << std::endl;
-    //user->searchRequestQueue.pop();
     std::string eachWord;  
     std::string str;
 
@@ -175,7 +180,6 @@ void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
         
     for (unsigned int i = 0; i < lineVector.size(); i++) {
         eachWord = lineVector.at(i);
-        //std::cout << eachWord << std::endl;
         
         if (caseInsensitive(eachWord,this->objectiveWord)){
             
@@ -191,7 +195,6 @@ void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
                 previousWord = lineVector.at(i-1);
                 nextWord = lineVector.at(i+1);
             }
-            //std::cout<<previousWord<<" "<<eachWord<<" "<<nextWord;
             Result foundResult(previousWord, nextWord, eachWord, (myLine+1), fileName);
             std::lock_guard<std::mutex> lock(*mtx);
             result_list.push_back(foundResult);
@@ -205,14 +208,14 @@ bool Browser::caseInsensitive(std::string eachWord, std::string objectiveWord){
     unsigned int cCorrect = 0;
     unsigned int len = eachWord.size();
     
-    for(unsigned int i = 0; i < len; i++){
-
-        if((((eachWord[i]) == (tolower(objectiveWord[i]))) || 
-            ((eachWord[i]) == (toupper(objectiveWord[i]))))  && 
-            (check == false)){
+    for (unsigned int i = 0; i < len; i++) {
+        if ((((eachWord[i]) == (tolower(objectiveWord[i]))) || 
+            ((eachWord[i]) == (toupper(objectiveWord[i])))) && 
+            (check == false)) {
             cCorrect++;
-        }else{
-            if(ispunct(eachWord[i])){  //Interesting method used to check if a character is ! , . ; and such
+        } else {
+            /* Interesting method used to check if a character is ! , . ; and such */
+            if (ispunct(eachWord[i])) {  
                 cCorrect++;
             }
             cCorrect--;

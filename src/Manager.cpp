@@ -77,8 +77,19 @@ int main(int argc, char *argv[]) {
 
     std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
 
+    endRequest = true;
+    paymentGatewayCV.notify_one();
     pgThread.detach();
 
     return 0;
 }   
 #endif
+
+/*
+-Comprobar el saldo en resultado encontrado.
+-Decrementar saldo de cliente no premium
+-REcargar saldo a los cliente premium normales(Integrar el servio de pago)
+-80% y 20% en la cola de peticiones.
+que al comienzo llegen todas las peticiones y dependiendo del tipo de usuario meta a unos a otros??
+-Meter los resutlados en ficheros.
+*/
