@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
+#include <queue>
 
 #include "../include/definitions.h"
 #include "../src/Result.cpp"
@@ -81,19 +82,19 @@ int numberFilesToRead(std::vector<std::string> &filesNames) {
 
 void addSearchRequest(User *user, std::string objectiveWord) {
     std::unique_lock<std::mutex> ul(searchRequestMutex);
-    searchRequestCV.wait(ul,[] {return (searchRequestQueue.size() < N_SEARCH_MAX);});
+    searchRequestCV.wait(ul,[] {return (searchQueue.size() < N_SEARCH_MAX);});
     
     SearchRequest rq(user->getId(),objectiveWord);
-    searchRequestQueue.push(rq);
+    searchQueue.push(rq);
     std::cout << BHIYELLOW << " [BR] La cola de peticiones tiene " << 
-            (N_SEARCH_MAX - searchRequestQueue.size()) << " huecos disponibles" << 
+            (N_SEARCH_MAX - searchQueue.size()) << " huecos disponibles" << 
             " (peticion del usuario " << user->getId() << ")" << BHIWHITE << std::endl;
     ul.unlock();
 }
 
 void removeSearchRequest(User *user, std::string objectiveWord) {
     searchRequestQueueMutex.lock();
-    searchRequestQueue.pop();
+    searchQueue.pop();
     std::cout << BHIYELLOW << " [BR] Búsqueda de la palabra '" << objectiveWord << 
             "' (Usuario " <<  user->getId() << ") a finalizado" << BHIWHITE << std::endl;
     searchRequestCV.notify_one();
@@ -111,7 +112,12 @@ void Browser::mainBrowser() {
                              ": '" << objectiveWord << "'" << BHIWHITE << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    addSearchRequest(this->user, this->objectiveWord);
+   
+    
+
+    
+
+   // addSearchRequest(this->user, this->objectiveWord);
 
     /* Launch as many threads as files in material directory */
     for (int i = 0; i < numFiles; i++) {
@@ -122,7 +128,10 @@ void Browser::mainBrowser() {
 
     std::for_each(searchers.begin(), searchers.end(), std::mem_fn(&std::thread::join));
 
-    removeSearchRequest(this->user, this->objectiveWord);
+    //removeSearchRequest(this->user, this->objectiveWord);
+
+    semConcurrentBrowser.signal();
+
 
     //aqui utilizar promise and uture para sincronizar todoos los hijos
     //RECORDAR: utilizar promise y future para propagar las excepciones 
@@ -136,7 +145,7 @@ void Browser::mainBrowser() {
                 << result_list[i].getNextWord() << BHIWHITE << std::endl;
         }
     } else {
-        std::cout << "No se ha encontrado resultados" << std::endl; 
+        std::cout << BHIRED << " [BR] No se ha encontrado resultados" << BHIWHITE << std::endl; 
     }
 }
 

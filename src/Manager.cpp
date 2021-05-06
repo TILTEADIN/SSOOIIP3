@@ -6,7 +6,10 @@
 #include "../src/PaymentGateway.cpp"
 #include "../src/Browser.cpp"
 
-std::vector<std::string> diccionary = {"prueba","cuadro","presidente","vendedores","titulo","precio","castillo"};
+std::vector<std::string> diccionary = {"prueba","cuadro","presidente","vendedores",
+                                    "titulo","precio","castillo","brujula","beneficios",
+                                    "internet","equipo","compeñeros","confiabilidad",
+                                    "brillante","ojos","comprension","historia"};
 
 //ESTE METODO TIENE QUE ESTAR EN BROWSER o en definitions
 /* Request to payment service to recharge credit of a given user */
@@ -55,6 +58,32 @@ void installSignalHandler() {
     }
 }
 
+/* Ret */
+int searchForClientType(int clientPreference,std::vector<User> clients) {
+    int index;
+    
+    for (int i = 0; i < NUM_CLIENTS; i++) {
+        if (clientPreference > 7 ){
+            if(clients[i].getTypeUser() == 0)
+                index = i;
+        } else {
+            if(clients[i].getTypeUser() == 1 || clients[i].getTypeUser() == 2)
+                index = i;
+        }
+    }
+
+    return index;
+}
+
+
+void deleteServedClients(std::vector<User> clients,std::vector<int> clientsToBeErased) { 
+            std::cout<<"EL tamaño es :"<<clientsToBeErased.size()<<std::endl;
+    while(!clientsToBeErased.empty()){
+        clients.erase(clients.begin()+clientsToBeErased.back());
+        clientsToBeErased.pop_back();
+    }
+}
+
 /* Main function */
 int main(int argc, char *argv[]) {
     /* Install signal handler*/
@@ -70,13 +99,37 @@ int main(int argc, char *argv[]) {
         //std::cout << i << std::endl;
         //std::queue<SearchRequest> searchRequestQueue1;
         //searchRequestQueue1.push(SearchRequest(i,selectRandomWord()));
-        clients.push_back(User(i, generateRandomNumber(MAXIMUM_CREDIT), generateIsVip(), selectRandomWord()));
-        std::mutex sem;
-        threads.push_back(std::thread(Browser(&sem, &clients[i])));
+        
+        //Number three is passed as argument for generateRandomNumber so one of the three possible types of user is generated
+        clients.push_back(User(i, generateRandomNumber(3), selectRandomWord()));
+    }
+    std::mutex sem;
+
+    while(!clients.empty()){
+        std::cout<<"entrando en el bucle"<<std::endl;
+        std::vector<int> clientsToBeErased;
+        
+        for (int i = 0; i < CONCURRENT_BROWSERS; i++){
+            int clientPreference = generateRandomNumber(9);
+            std::cout<<"Preferencia es: "<<clientPreference<<std::endl;
+            if (clientPreference > 7){
+                //Enqueue free client
+                clientsToBeErased.push_back(searchForClientType(clientPreference,clients));
+                threads.push_back(std::thread(Browser(&sem, &clients[clientsToBeErased.back()])));
+            } else {
+                //Enqueue VIP client
+                clientsToBeErased.push_back(searchForClientType(clientPreference,clients));
+                threads.push_back(std::thread(Browser(&sem, &clients[clientsToBeErased.back()])));
+            }
+            semConcurrentBrowser.wait();
+            deleteServedClients(clients,clientsToBeErased);
+        }   
+        
     }
 
     std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
-
+    
+    /* Notify to payment gateway that program ends */
     endRequest = true;
     paymentGatewayCV.notify_one();
     pgThread.detach();
@@ -88,7 +141,7 @@ int main(int argc, char *argv[]) {
 /*
 -Comprobar el saldo en resultado encontrado.
 -Decrementar saldo de cliente no premium
--REcargar saldo a los cliente premium normales(Integrar el servio de pago)
+-Recargar saldo a los cliente premium normales(Integrar el servio de pago)
 -80% y 20% en la cola de peticiones.
 que al comienzo llegen todas las peticiones y dependiendo del tipo de usuario meta a unos a otros??
 -Meter los resutlados en ficheros.
