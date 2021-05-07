@@ -56,6 +56,7 @@ Browser::~Browser(){}
 
 void Browser::operator()() {
     mainBrowser();
+    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 }
 
 /* Returns the number of files on the material directory */
@@ -79,7 +80,7 @@ int numberFilesToRead(std::vector<std::string> &filesNames) {
 
     return numFiles; 
 }
-
+/*
 void addSearchRequest(User *user, std::string objectiveWord) {
     std::unique_lock<std::mutex> ul(searchRequestMutex);
     searchRequestCV.wait(ul,[] {return (searchQueue.size() < N_SEARCH_MAX);});
@@ -99,7 +100,7 @@ void removeSearchRequest(User *user, std::string objectiveWord) {
             "' (Usuario " <<  user->getId() << ") a finalizado" << BHIWHITE << std::endl;
     searchRequestCV.notify_one();
     searchRequestQueueMutex.unlock();
-}
+}*/
 
 /* Launch the browser children for each file in material directory */
 void Browser::mainBrowser() {
@@ -108,14 +109,9 @@ void Browser::mainBrowser() {
 
     int numFiles = numberFilesToRead(filesNames);
 
-    std::cout << BHIYELLOW << " [BG] Palabra a buscar para el usuario " << user->getId() <<
-                             ": '" << objectiveWord << "'" << BHIWHITE << std::endl;
+    std::cout << BHIYELLOW << " [BG] Palabra a buscar para el usuario " << user->getId() << 
+                            ": '" << objectiveWord << "'" << BHIWHITE << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   
-    
-
-    
 
    // addSearchRequest(this->user, this->objectiveWord);
 
@@ -130,7 +126,7 @@ void Browser::mainBrowser() {
 
     //removeSearchRequest(this->user, this->objectiveWord);
 
-    semConcurrentBrowser.signal();
+    semConcurrentBrowser.signal(); /* Decrease the semcounter so other users can access */
 
 
     //aqui utilizar promise and uture para sincronizar todoos los hijos
@@ -145,7 +141,7 @@ void Browser::mainBrowser() {
                 << result_list[i].getNextWord() << BHIWHITE << std::endl;
         }
     } else {
-        std::cout << BHIRED << " [BR] No se ha encontrado resultados" << BHIWHITE << std::endl; 
+        std::cout << BHIRED << " [BR] No se ha encontrado resultados para el usuario " << user->getId() << BHIWHITE << std::endl; 
     }
 }
 
@@ -163,7 +159,7 @@ int Browser::readFile(std::string completePath, std::string fileName) {
     }
 
     while (!inFile.eof()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
         std::getline(inFile,eachLine);
         findWord(eachLine,numLine,fileName);
         numLine++;

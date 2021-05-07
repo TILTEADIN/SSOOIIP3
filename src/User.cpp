@@ -19,6 +19,7 @@ class User {
 		int initialCredit;
 		int currentCredit;
 		int typeUser;
+		bool served;
 		std::string requestedWord;
 		//std::string requestedWord;
 
@@ -30,8 +31,10 @@ class User {
 		int getCurrentCredit();
 		int getId();
 		int getTypeUser();
+		int getServed();
 		std::string getRequestedWord();
 		void setCurrentCredit(int currentCredit);
+		void setServed(bool served);
 		int generateRandomNumber(int max);
 };
 
@@ -40,6 +43,7 @@ class User {
 		this->currentCredit = initialCredit; //el saldo en el momento de la creación es el saldo incial
 		this->id = id;
 		this->requestedWord = requestedWord;
+		this->served = false;
 		switch (typeUser) {
 			case 0:
 				this->initialCredit = MAX_FREE_RESULTS;
@@ -74,8 +78,16 @@ class User {
 	int User::getTypeUser(){
 		return this->typeUser;}
 
+	int User::getServed() {
+		return this->served;
+	}
+
 	void User::setCurrentCredit(int currentCredit){
 		this->currentCredit = currentCredit;
+	}
+
+	void User::setServed(bool served) {
+		this->served = served;
 	}
 
 	int User::generateRandomNumber(int max){

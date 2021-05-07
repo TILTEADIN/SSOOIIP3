@@ -15,12 +15,12 @@
 #include "../src/SemCounter.cpp"
 
 #define NUM_CLIENTS 10
-#define CONCURRENT_BROWSERS 4
+#define CONCURRENT_REQUESTS 4
 #define MAX_LEN 256
 #define N_SEARCH_MAX 4
 #define MATERIAL_PATH "material2/"
 
-SemCounter semConcurrentBrowser(CONCURRENT_BROWSERS);
+SemCounter semConcurrentBrowser(CONCURRENT_REQUESTS);
 std::priority_queue<int> requestQueue;
 std::queue<SearchRequest> searchQueue;
 std::condition_variable paymentGatewayCV, searchRequestCV, pushSearchRequest;

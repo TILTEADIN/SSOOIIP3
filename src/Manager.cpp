@@ -8,7 +8,7 @@
 
 std::vector<std::string> diccionary = {"prueba","cuadro","presidente","vendedores",
                                     "titulo","precio","castillo","brujula","beneficios",
-                                    "internet","equipo","compeñeros","confiabilidad",
+                                    "internet","equipo","compañeros","confiabilidad",
                                     "brillante","ojos","comprension","historia"};
 
 //ESTE METODO TIENE QUE ESTAR EN BROWSER o en definitions
@@ -58,77 +58,82 @@ void installSignalHandler() {
     }
 }
 
-/* Ret */
-int searchForClientType(int clientPreference,std::vector<User> clients) {
-    int index;
-    
-    for (int i = 0; i < NUM_CLIENTS; i++) {
-        if (clientPreference > 7 ){
-            if(clients[i].getTypeUser() == 0)
-                index = i;
-        } else {
-            if(clients[i].getTypeUser() == 1 || clients[i].getTypeUser() == 2)
-                index = i;
+/* Returns a client*/
+int searchForClientType(int clientPreference, std::vector<User> clients) {
+    int index = -1; /* Returns -1 if there is no user without being attended  */
+
+    for (int i = 0; i < clients.size(); i++) {
+        if (!clients[i].getServed()) {
+            if (clientPreference > 8){
+                if(clients[i].getTypeUser() == 1) {
+                    index = i;
+                    break;
+                }
+            } else {
+                if(clients[i].getTypeUser() == 2 || clients[i].getTypeUser() == 3){
+                    index = i;
+                    break;
+                }
+            } 
         }
     }
 
     return index;
 }
-
-
+/*
 void deleteServedClients(std::vector<User> clients,std::vector<int> clientsToBeErased) { 
             std::cout<<"EL tamaño es :"<<clientsToBeErased.size()<<std::endl;
     while(!clientsToBeErased.empty()){
         clients.erase(clients.begin()+clientsToBeErased.back());
         clientsToBeErased.pop_back();
     }
-}
+}*/
 
 /* Main function */
 int main(int argc, char *argv[]) {
-    /* Install signal handler*/
+    
+    /* Install signal handler */
     installSignalHandler();
+
     /* Launch payment service */
     PaymentGateway pg;
     std::thread pgThread(std::ref(pg));
 
+    std::mutex sem;
     std::vector<User> clients;
     std::vector<std::thread> threads;
 
-    for (int i = 0; i < NUM_CLIENTS; i++) {
-        //std::cout << i << std::endl;
-        //std::queue<SearchRequest> searchRequestQueue1;
-        //searchRequestQueue1.push(SearchRequest(i,selectRandomWord()));
-        
-        //Number three is passed as argument for generateRandomNumber so one of the three possible types of user is generated
+    /* Create the user's vector */
+    for (int i = 1; i <= NUM_CLIENTS; i++) {
+        /* Number three is passed as argument for generateRandomNumber so one of the three possible types of user is generated */
         clients.push_back(User(i, generateRandomNumber(3), selectRandomWord()));
     }
-    std::mutex sem;
 
     while(!clients.empty()){
-        std::cout<<"entrando en el bucle"<<std::endl;
-        std::vector<int> clientsToBeErased;
         
-        for (int i = 0; i < CONCURRENT_BROWSERS; i++){
-            int clientPreference = generateRandomNumber(9);
-            std::cout<<"Preferencia es: "<<clientPreference<<std::endl;
-            if (clientPreference > 7){
-                //Enqueue free client
-                clientsToBeErased.push_back(searchForClientType(clientPreference,clients));
-                threads.push_back(std::thread(Browser(&sem, &clients[clientsToBeErased.back()])));
-            } else {
-                //Enqueue VIP client
-                clientsToBeErased.push_back(searchForClientType(clientPreference,clients));
-                threads.push_back(std::thread(Browser(&sem, &clients[clientsToBeErased.back()])));
-            }
-            semConcurrentBrowser.wait();
-            deleteServedClients(clients,clientsToBeErased);
-        }   
-        
-    }
+        for (int i = 0; i < CONCURRENT_REQUESTS; i++){
+            int clientPreference = generateRandomNumber(10);
+            
+            int index = searchForClientType(clientPreference, clients);
 
-    std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
+            if (index != -1) { /* Check if there are clients to be served */
+                std::cout << BHIGREEN << " [MG] El usuario " << clients[index].getId() << 
+                        " (" << clients[index].getTypeUser() << ") esta siendo atentido" << BHIWHITE << std::endl;
+                clients[index].setServed(true); /* Set client is being served */
+                threads.push_back(std::thread(Browser(&sem, &clients[index])));
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+                //std::cout << index << " " << clients[index].getId() << std::endl;
+                clients.erase(clients.begin()+index); /* Delete the served user from clients vector */
+                std::cout << BHIGREEN << " [MG] Usuarios restantes: " << clients.size() << BHIWHITE << std::endl;
+                semConcurrentBrowser.wait();
+            }
+        }   
+    }
     
+    std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
+
     /* Notify to payment gateway that program ends */
     endRequest = true;
     paymentGatewayCV.notify_one();
