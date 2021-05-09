@@ -21,6 +21,7 @@ class Result{
         std::string getNextWord();
         std::string getObjectiveWord();
         std::string getFileName();
+        void writeResultToFile(int userId);
 };
 
 /* Class used for storing the Results found along the texts */
@@ -52,6 +53,21 @@ int Result::getLine() {
 
 std::string Result::getFileName() {
     return this->fileName;
+}
+
+void Result::writeResultToFile(int userID){
+    char path [256];
+    sprintf (path, "./results/user%d", userID); 
+    std::ofstream file(path);
+    std::stringstream auxiliary_formatting;
+    auxiliary_formatting << " On file: " <<fileName<<"--> Matching Result at Line: "<<line<<" --> "<<previousWord<<" "<<objectiveWord<<" "<<nextWord<< std::endl;;
+    //CHECKING ERRORS
+    //file.good();
+    std::string result_str=auxiliary_formatting.str();
+    file << result_str << std::endl;
+    file << "hola" << std::endl;
+    // Close the file
+    file.close();
 }
 
 #endif

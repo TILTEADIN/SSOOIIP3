@@ -35,6 +35,8 @@ class Browser {
         int readFile(std::string completePath, std::string fileName);
         void findWord(std::string eachLine, int myLine, std::string fileName);
         bool caseInsensitive(std::string eachWord, std::string objectiveWord);
+        void manageUserCredit();
+        void requestCreditRecharge();
         void mainBrowser();
         void operator()();
 };
@@ -125,7 +127,7 @@ void Browser::mainBrowser() {
     std::for_each(searchers.begin(), searchers.end(), std::mem_fn(&std::thread::join));
 
     //removeSearchRequest(this->user, this->objectiveWord);
-
+    //std::this_thread::sleep_for(std::chrono::milliseconds(6000));
     semConcurrentBrowser.signal(); /* Decrease the semcounter so other users can access */
 
 
@@ -134,11 +136,13 @@ void Browser::mainBrowser() {
     //Aqui escribirá en un archivo para cada usuario.
     if (result_list.size() != 0) {
         for (int i = 0; i < result_list.size(); i++) {
-            std::cout << BHIPURPLE << " [BR] [RESULTS] Usuario: " << user->getId() << " - archivo: " << result_list[i].getFileName() << " - " 
+            /*std::cout << BHIPURPLE << " [BR] [RESULTS] Usuario: " << user->getId() << " - archivo: " << result_list[i].getFileName() << " - " 
                 << "linea: " << result_list[i].getLine() << ": " 
                 << result_list[i].getPreviousWord() << " " 
                 << result_list[i].getObjectiveWord() << " "
-                << result_list[i].getNextWord() << BHIWHITE << std::endl;
+                << result_list[i].getNextWord() << BHIWHITE << std::endl;*/
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            result_list[i].writeResultToFile(user->getId());
         }
     } else {
         std::cout << BHIRED << " [BR] No se ha encontrado resultados para el usuario " << user->getId() << BHIWHITE << std::endl; 
@@ -169,6 +173,68 @@ int Browser::readFile(std::string completePath, std::string fileName) {
 
     return 0;
 }
+
+/* Request to payment service to recharge credit of a given user */
+void Browser::requestCreditRecharge() {
+    rechargeCreditRequestMutex.lock();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::cout << BHIGREEN << " [MG] User n: " << user->getId() << 
+                " requests a credit top up " << BHIWHITE << std::endl;
+
+    rechargeCreditRequestQueue.push(user);
+    paymentGatewayCV.notify_one();
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    std::cout << BHIGREEN << " [MG] User's credit" << user->getId() << " topped up to " 
+        << user->getCurrentCredit() << " credits." << BHIWHITE << std::endl;
+} 
+
+/*  */
+void Browser::manageUserCredit(){
+
+    //este metodo tal vez deberia estar en User?
+
+    switch(user->getTypeUser()){
+
+        case 1:
+            //ree User
+            //Must find results until it runs out of credits
+            user->setCurrentCredit(user->getCurrentCredit()-1);
+            break;
+
+        case 2:
+            // VIP-Limited User
+            //If credit is 0, must be recharged
+            if(user->getCurrentCredit()==0){
+                requestCreditRecharge();
+            }
+            if(user->getCurrentCredit()>0){
+
+                user->setCurrentCredit(user->getCurrentCredit()-1);
+            }
+            //hablar con alberto, si hay que decrementar y luego recargar o vice versa y si hay que esperar a que se ateinda la peticion de recarga
+
+            break;
+
+        case 3: 
+            //VIP-Ulimited User
+            //Nothing to check in here
+            break;
+            
+    }
+}
+
+
+
+/*
+void Browser::manageUserCredit() {
+    if (user->getTypeUser() == 1 || user->getTypeUser() == 2) {
+        user->decreaseCredit();
+    }
+
+    if (user->getTypeUser() == 2 && user->getCurrentCredit() == 0) {
+        requestCreditRecharge();
+    }
+}*/
 
 /* Method used for finding a word within a given string */
 void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
@@ -203,8 +269,9 @@ void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
             Result foundResult(previousWord, nextWord, eachWord, (myLine+1), fileName);
             std::lock_guard<std::mutex> lock(*mtx);
             result_list.push_back(foundResult);
+            manageUserCredit();
         }
-	}
+    }
 }
 
 /* Checks whether a word is or isnt upper case and if so transforms it */

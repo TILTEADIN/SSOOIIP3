@@ -40,7 +40,6 @@ class User {
 
 	User::User(int id ,int typeUser,std::string requestedWord){
 		this->typeUser = typeUser;
-		this->currentCredit = initialCredit; //el saldo en el momento de la creación es el saldo incial
 		this->id = id;
 		this->requestedWord = requestedWord;
 		this->served = false;
@@ -57,6 +56,7 @@ class User {
 		}
 		//this->requestedWord = searchRequestQueue.front().getRequestedWord();
 		//searchRequestQueue.pop();
+		this->currentCredit = initialCredit; //el saldo en el momento de la creación es el saldo incial
 	}
 
 	int User::getInitialCredit(){
@@ -91,9 +91,11 @@ class User {
 	}
 
 	int User::generateRandomNumber(int max){
-		usleep(3000);
-		srand((unsigned) time(0));
-		return ((rand() % max) + 1);
+    	usleep(1000);
+    	struct timespec ts;
+    	clock_gettime(CLOCK_MONOTONIC, &ts);
+    	srand((time_t)ts.tv_nsec); /* using nano-seconds instead of seconds */
+    	return ((rand() % max) + 1);
 	}
 
 #endif

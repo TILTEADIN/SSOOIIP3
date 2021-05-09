@@ -13,6 +13,7 @@ std::vector<std::string> diccionary = {"prueba","cuadro","presidente","vendedore
 
 //ESTE METODO TIENE QUE ESTAR EN BROWSER o en definitions
 /* Request to payment service to recharge credit of a given user */
+/*
 void requestCreditRecharge(User *user) {
     rechargeCreditRequestMutex.lock();
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -24,7 +25,7 @@ void requestCreditRecharge(User *user) {
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     std::cout << BHIGREEN << " [MG] User's credit" << user->getId() << " topped up to " 
         << user->getCurrentCredit() << " credits." << BHIWHITE << std::endl;
-}    
+} */   
 
 /* Select a random word for the diccionary */
 std::string selectRandomWord() {
@@ -128,6 +129,7 @@ int main(int argc, char *argv[]) {
                 clients.erase(clients.begin()+index); /* Delete the served user from clients vector */
                 std::cout << BHIGREEN << " [MG] Usuarios restantes: " << clients.size() << BHIWHITE << std::endl;
                 semConcurrentBrowser.wait();
+                std::cout << semConcurrentBrowser.getValue() << std::endl;
             }
         }   
     }
