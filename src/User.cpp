@@ -47,12 +47,15 @@ class User {
 		switch (typeUser) {
 			case 0:
 				this->initialCredit = MAX_FREE_RESULTS;
+				this->currentCredit=initialCredit;
 				break;
 			case 1:
 				this->initialCredit = generateRandomNumber(MAXIMUM_CREDIT);
+				this->currentCredit=initialCredit;
 				break;
 			case 2:
 				this->initialCredit = -1;
+				this->currentCredit=initialCredit;
 				break;
 		}
 		//this->requestedWord = searchRequestQueue.front().getRequestedWord();

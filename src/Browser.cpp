@@ -31,7 +31,7 @@ class Browser {
 
         Browser(std::mutex *mtx, User* user);
         ~Browser();
-
+        void manageCredit();
         int readFile(std::string completePath, std::string fileName);
         void findWord(std::string eachLine, int myLine, std::string fileName);
         bool caseInsensitive(std::string eachWord, std::string objectiveWord);
@@ -139,6 +139,7 @@ void Browser::mainBrowser() {
                 << result_list[i].getPreviousWord() << " " 
                 << result_list[i].getObjectiveWord() << " "
                 << result_list[i].getNextWord() << BHIWHITE << std::endl;
+                
         }
     } else {
         std::cout << BHIRED << " [BR] No se ha encontrado resultados para el usuario " << user->getId() << BHIWHITE << std::endl; 
@@ -201,6 +202,9 @@ void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
                 nextWord = lineVector.at(i+1);
             }
             Result foundResult(previousWord, nextWord, eachWord, (myLine+1), fileName);
+
+            //llamar aqui a manageCredit
+            foundResult.writeResultToFile(1);
             std::lock_guard<std::mutex> lock(*mtx);
             result_list.push_back(foundResult);
         }
@@ -232,5 +236,43 @@ bool Browser::caseInsensitive(std::string eachWord, std::string objectiveWord){
     }
 
     return check;
+}
+
+
+void Browser::manageCredit(){
+
+    //este metodo tal vez deberia estar en User?
+
+    switch(user->getTypeUser()){
+
+        case 0:
+            //Free User
+            //Must find results until it runs out of credits
+            user->setCurrentCredit(user->getCurrentCredit()-1);
+            break;
+
+        case 1:
+            // VIP-Limited User
+            //If credit is 0, must be recharged
+            if(user->getCurrentCredit()==0){
+                rechargeCreditRequestQueue.push(user);
+            }
+            if(user->getCurrentCredit()>0){
+
+                user->setCurrentCredit(user->getCurrentCredit()-1);
+            }
+            //hablar con alberto, si hay que decrementar y luego recargar o vice versa y si hay que esperar a que se ateinda la peticion de recarga
+
+            break;
+            
+            
+
+        case 2: 
+            //VIP-Ulimited User
+            //Nothing to check in here
+            break;
+            
+    }
+
 }
 #endif
