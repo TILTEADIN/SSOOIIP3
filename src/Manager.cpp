@@ -11,22 +11,6 @@ std::vector<std::string> diccionary = {"prueba","cuadro","presidente","vendedore
                                     "internet","equipo","compañeros","confiabilidad",
                                     "brillante","ojos","comprension","historia"};
 
-//ESTE METODO TIENE QUE ESTAR EN BROWSER o en definitions
-/* Request to payment service to recharge credit of a given user */
-/*
-void requestCreditRecharge(User *user) {
-    rechargeCreditRequestMutex.lock();
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    std::cout << BHIGREEN << " [MG] User n: " << user->getId() << 
-                " requests a credit top up " << BHIWHITE << std::endl;
-
-    rechargeCreditRequestQueue.push(user);
-    paymentGatewayCV.notify_one();
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    std::cout << BHIGREEN << " [MG] User's credit" << user->getId() << " topped up to " 
-        << user->getCurrentCredit() << " credits." << BHIWHITE << std::endl;
-} */   
-
 /* Select a random word for the diccionary */
 std::string selectRandomWord() {
     int num = generateRandomNumber(diccionary.size())-1;
@@ -81,14 +65,41 @@ int searchForClientType(int clientPreference, std::vector<User> clients) {
 
     return index;
 }
-/*
-void deleteServedClients(std::vector<User> clients,std::vector<int> clientsToBeErased) { 
-            std::cout<<"EL tamaño es :"<<clientsToBeErased.size()<<std::endl;
-    while(!clientsToBeErased.empty()){
-        clients.erase(clients.begin()+clientsToBeErased.back());
-        clientsToBeErased.pop_back();
+
+/* Returns the king of user name */
+std::string getNameTypeUser(int typeUser) {
+    std::string nameTypeUser;
+
+    switch(typeUser){
+        case 1:
+            nameTypeUser = "free";
+            break;
+        case 2:
+            nameTypeUser = "limited premimum";
+            break;
+        case 3:
+            nameTypeUser = "unlimited premimum";
+            break;
     }
-}*/
+    return nameTypeUser;
+}
+
+/* Check if all clients are served to finish the main loop */
+bool allClientServed(std::vector<User> clients) {
+    int cnt = 0;
+    bool go = true;
+
+    for (int i = 0; i < clients.size(); i++) {
+        if (clients[i].getServed() == true) {
+            cnt++;
+        }
+    }
+
+    if (cnt == clients.size()) {
+        go = false;
+    }
+    return go;
+}
 
 /* Main function */
 int main(int argc, char *argv[]) {
@@ -103,6 +114,10 @@ int main(int argc, char *argv[]) {
     std::mutex sem;
     std::vector<User> clients;
     std::vector<std::thread> threads;
+    std::mutex semSearchRequestQueue;
+
+    int numServedUsers = 0;
+
 
     /* Create the user's vector */
     for (int i = 1; i <= NUM_CLIENTS; i++) {
@@ -110,28 +125,37 @@ int main(int argc, char *argv[]) {
         clients.push_back(User(i, generateRandomNumber(3), selectRandomWord()));
     }
 
-    while(!clients.empty()){
+    while(allClientServed(clients)){
         
-        for (int i = 0; i < CONCURRENT_REQUESTS; i++){
-            int clientPreference = generateRandomNumber(10);
+        std::unique_lock<std::mutex> ul(semSearchRequestQueue);
+        searchRequestCV.wait(ul, [] {return (searchRequestQueue.size() < CONCURRENT_REQUESTS);});
+        
+        ul.unlock();
+
+        int clientPreference = generateRandomNumber(10);
             
-            int index = searchForClientType(clientPreference, clients);
+        int index = searchForClientType(clientPreference, clients);
 
-            if (index != -1) { /* Check if there are clients to be served */
-                std::cout << BHIGREEN << " [MG] El usuario " << clients[index].getId() << 
-                        " (" << clients[index].getTypeUser() << ") esta siendo atentido" << BHIWHITE << std::endl;
-                clients[index].setServed(true); /* Set client is being served */
-                threads.push_back(std::thread(Browser(&sem, &clients[index])));
+        if (index != -1) { /* Check if there are clients to be served */
+            std::cout << BHIGREEN << " [MG] El usuario " << clients[index].getId() << 
+                    " (" << getNameTypeUser(clients[index].getTypeUser()) << ") esta siendo atentido" << BHIWHITE << std::endl;
+            clients[index].setServed(true); /* Set client is being served */
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            SearchRequest sq(clients[index].getId(), clients[index].getRequestedWord());
+            searchRequestQueueMutex.lock(); 
+            searchRequestQueue.push(sq);
+            searchRequestQueueMutex.unlock(); 
+                
+            threads.push_back(std::thread(Browser(&sem, &clients[index]))); /* Launch the main browser for each user */
 
-                //std::cout << index << " " << clients[index].getId() << std::endl;
-                clients.erase(clients.begin()+index); /* Delete the served user from clients vector */
-                std::cout << BHIGREEN << " [MG] Usuarios restantes: " << clients.size() << BHIWHITE << std::endl;
-                semConcurrentBrowser.wait();
-                std::cout << semConcurrentBrowser.getValue() << std::endl;
-            }
-        }   
+            std::cout << BHIGREEN << " [MG] Usuarios siendo atentidos actualmente " << 
+                    searchRequestQueue.size() << " (max. " <<  CONCURRENT_REQUESTS << ")" 
+                    << BHIWHITE << std::endl;
+                
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                
+            std::cout << BHIGREEN << " [MG] Usuarios restantes: " << clients.size() - ++numServedUsers << BHIWHITE << std::endl;
+        } 
     }
     
     std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));

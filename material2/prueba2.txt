@@ -3,3 +3,5 @@ a ver si cuando crea los hilos
 crea varios segun el numero de archivos
 que haya en este directorio.
 el castillo del presidente.
+vamos poner la palabra titulo a ver si
+ahora sale y tambien la palabra compresion vale?

@@ -23,7 +23,7 @@
 class Browser {
     private:
         std::mutex *mtx;
-        std::string objectiveWord;
+        //std::string objectiveWord;
 
     public:
         User *user;
@@ -44,17 +44,11 @@ class Browser {
 Browser::Browser(std::mutex *mtx, User* user) {
     this->mtx = mtx;
     this->user= user;
-    this->objectiveWord = user->getRequestedWord();
     std::vector<Result> result_list;
     //user->searchRequestQueue.pop();
 }
 
 Browser::~Browser(){}
-
-/* Returns the type of user */
-//int getTypeOfUser() {
-
-//}
 
 void Browser::operator()() {
     mainBrowser();
@@ -82,27 +76,6 @@ int numberFilesToRead(std::vector<std::string> &filesNames) {
 
     return numFiles; 
 }
-/*
-void addSearchRequest(User *user, std::string objectiveWord) {
-    std::unique_lock<std::mutex> ul(searchRequestMutex);
-    searchRequestCV.wait(ul,[] {return (searchQueue.size() < N_SEARCH_MAX);});
-    
-    SearchRequest rq(user->getId(),objectiveWord);
-    searchQueue.push(rq);
-    std::cout << BHIYELLOW << " [BR] La cola de peticiones tiene " << 
-            (N_SEARCH_MAX - searchQueue.size()) << " huecos disponibles" << 
-            " (peticion del usuario " << user->getId() << ")" << BHIWHITE << std::endl;
-    ul.unlock();
-}
-
-void removeSearchRequest(User *user, std::string objectiveWord) {
-    searchRequestQueueMutex.lock();
-    searchQueue.pop();
-    std::cout << BHIYELLOW << " [BR] Búsqueda de la palabra '" << objectiveWord << 
-            "' (Usuario " <<  user->getId() << ") a finalizado" << BHIWHITE << std::endl;
-    searchRequestCV.notify_one();
-    searchRequestQueueMutex.unlock();
-}*/
 
 /* Launch the browser children for each file in material directory */
 void Browser::mainBrowser() {
@@ -112,10 +85,8 @@ void Browser::mainBrowser() {
     int numFiles = numberFilesToRead(filesNames);
 
     std::cout << BHIYELLOW << " [BG] Palabra a buscar para el usuario " << user->getId() << 
-                            ": '" << objectiveWord << "'" << BHIWHITE << std::endl;
+                            ": '" << user->getRequestedWord() << "'" << BHIWHITE << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   // addSearchRequest(this->user, this->objectiveWord);
 
     /* Launch as many threads as files in material directory */
     for (int i = 0; i < numFiles; i++) {
@@ -126,27 +97,29 @@ void Browser::mainBrowser() {
 
     std::for_each(searchers.begin(), searchers.end(), std::mem_fn(&std::thread::join));
 
-    //removeSearchRequest(this->user, this->objectiveWord);
-    //std::this_thread::sleep_for(std::chrono::milliseconds(6000));
-    semConcurrentBrowser.signal(); /* Decrease the semcounter so other users can access */
-
+    std::this_thread::sleep_for(std::chrono::milliseconds(6000));
+    searchRequestQueueMutex.lock(); 
+    searchRequestQueue.pop();
+    searchRequestQueueMutex.unlock(); 
 
     //aqui utilizar promise and uture para sincronizar todoos los hijos
     //RECORDAR: utilizar promise y future para propagar las excepciones 
     //Aqui escribirá en un archivo para cada usuario.
+
+    //std::cout << "result size: " << result_list.size() << std::endl;
     if (result_list.size() != 0) {
         for (int i = 0; i < result_list.size(); i++) {
-            /*std::cout << BHIPURPLE << " [BR] [RESULTS] Usuario: " << user->getId() << " - archivo: " << result_list[i].getFileName() << " - " 
-                << "linea: " << result_list[i].getLine() << ": " 
-                << result_list[i].getPreviousWord() << " " 
-                << result_list[i].getObjectiveWord() << " "
-                << result_list[i].getNextWord() << BHIWHITE << std::endl;*/
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             result_list[i].writeResultToFile(user->getId());
         }
     } else {
         std::cout << BHIRED << " [BR] No se ha encontrado resultados para el usuario " << user->getId() << BHIWHITE << std::endl; 
     }
+
+
+    /* Decrease the semcounter so other users can access */
+    //semConcurrentBrowser.signal();
+    searchRequestCV.notify_one();
 }
 
 /* Reads the file and checks if there's some error */
@@ -223,19 +196,6 @@ void Browser::manageUserCredit(){
     }
 }
 
-
-
-/*
-void Browser::manageUserCredit() {
-    if (user->getTypeUser() == 1 || user->getTypeUser() == 2) {
-        user->decreaseCredit();
-    }
-
-    if (user->getTypeUser() == 2 && user->getCurrentCredit() == 0) {
-        requestCreditRecharge();
-    }
-}*/
-
 /* Method used for finding a word within a given string */
 void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
 	 
@@ -252,7 +212,7 @@ void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
     for (unsigned int i = 0; i < lineVector.size(); i++) {
         eachWord = lineVector.at(i);
         
-        if (caseInsensitive(eachWord,this->objectiveWord)){
+        if (caseInsensitive(eachWord,user->getRequestedWord())){
             
             if (i == 0){
                 previousWord = "";
@@ -269,7 +229,7 @@ void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
             Result foundResult(previousWord, nextWord, eachWord, (myLine+1), fileName);
             std::lock_guard<std::mutex> lock(*mtx);
             result_list.push_back(foundResult);
-            manageUserCredit();
+            //manageUserCredit();
         }
     }
 }

@@ -5,6 +5,7 @@
 #include <thread>
 #include <string>
 
+/* Class used for storing the Results found along the texts */
 class Result{
     private:
         int line;
@@ -24,7 +25,6 @@ class Result{
         void writeResultToFile(int userId);
 };
 
-/* Class used for storing the Results found along the texts */
 Result::Result(std::string previousWord, std::string nextWord, std::string objectiveWord, int line, std::string fileName) {
     this->previousWord = previousWord;
     this->nextWord = nextWord;
@@ -55,19 +55,28 @@ std::string Result::getFileName() {
     return this->fileName;
 }
 
+/* Write the results of found words in one file for each user */
 void Result::writeResultToFile(int userID){
     char path [256];
-    sprintf (path, "./results/user%d", userID); 
-    std::ofstream file(path);
-    std::stringstream auxiliary_formatting;
-    auxiliary_formatting << " On file: " <<fileName<<"--> Matching Result at Line: "<<line<<" --> "<<previousWord<<" "<<objectiveWord<<" "<<nextWord<< std::endl;;
-    //CHECKING ERRORS
-    //file.good();
-    std::string result_str=auxiliary_formatting.str();
-    file << result_str << std::endl;
-    file << "hola" << std::endl;
-    // Close the file
+    sprintf (path, "./results/user%d.txt", userID); /* Name of file of each user results */
+    std::ofstream file;
+    std::stringstream auxiliaryFormatting;
+
+    auxiliaryFormatting << " On file: " << fileName << 
+                        " --> Matching Result at Line: " << line << 
+                        " --> " << previousWord << " " << objectiveWord << 
+                        " " <<nextWord<< std::endl;;
+
+    std::string resultStr = auxiliaryFormatting.str();
+
+    if (file.good()) { /* If file exists append*/
+        file.open(path, std::ios_base::app);
+    } else { /* If file doesn't exists create */
+        file.open(path);
+    }
+
+    file << resultStr; /* Write on the file */
+
     file.close();
 }
-
 #endif
