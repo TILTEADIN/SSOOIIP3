@@ -23,7 +23,6 @@
 class Browser {
     private:
         std::mutex *mtx;
-        //std::string objectiveWord;
 
     public:
         User *user;
@@ -39,6 +38,8 @@ class Browser {
         void requestCreditRecharge();
         void mainBrowser();
         bool checkCredit();
+        void generateResults();
+        void launchSearchers(std::vector<std::thread> &searchers, std::vector<std::string> filesNames, int numFiles);
         void operator()();
 };
 
@@ -46,7 +47,6 @@ Browser::Browser(std::mutex *mtx, User* user) {
     this->mtx = mtx;
     this->user= user;
     std::vector<Result> result_list;
-    //user->searchRequestQueue.pop();
 }
 
 Browser::~Browser(){}
@@ -68,7 +68,6 @@ int numberFilesToRead(std::vector<std::string> &filesNames) {
             /* Don't include . and .. directories */
             if (strcmp(ep->d_name, ".") && strcmp(ep->d_name, "..")) { 
                 filesNames.push_back(ep->d_name);
-                //std::cout << ep->d_name << std::endl;
                 numFiles++;
             }
         }
@@ -79,6 +78,29 @@ int numberFilesToRead(std::vector<std::string> &filesNames) {
     return numFiles; 
 }
 
+/* Launch as many threads as files in material directory */
+void Browser::launchSearchers(std::vector<std::thread> &searchers, std::vector<std::string> filesNames, int numFiles) {
+    for (int i = 0; i < numFiles; i++) {
+        std::string fileName = filesNames[i];
+        std::string completePath = MATERIAL_PATH + fileName;
+        searchers.push_back(std::thread([completePath, fileName, this] {readFile(completePath, fileName);}));
+    }
+
+    std::for_each(searchers.begin(), searchers.end(), std::mem_fn(&std::thread::join));
+}
+
+/* Write results for each users file results */
+void Browser::generateResults() {
+    if (result_list.size() != 0) {
+        for (int i = 0; i < result_list.size(); i++) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            result_list[i].writeResultToFile(user->getId());
+        }
+    } else {
+        std::cout << BHIRED << " [BR] No results found for the user " << user->getId() << BHIWHITE << std::endl; 
+    }
+}
+
 /* Launch the browser children for each file in material directory */
 void Browser::mainBrowser() {
     std::vector<std::string> filesNames;
@@ -86,44 +108,25 @@ void Browser::mainBrowser() {
 
     int numFiles = numberFilesToRead(filesNames);
 
-    std::cout << BHIYELLOW << " [BG] Palabra a buscar para el usuario " << user->getId() << 
+    std::cout << BHIYELLOW << " [BG] Search word for user " << user->getId() << 
                             ": '" << user->getRequestedWord() << "'" << BHIWHITE << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    /* Launch as many threads as files in material directory */
-    for (int i = 0; i < numFiles; i++) {
-        std::string fileName = filesNames[i];
-        //std::cout << fileName << std::endl;
-        std::string completePath = MATERIAL_PATH + fileName;
-        //std::cout << completePath << std::endl;       
-        searchers.push_back(std::thread([completePath, fileName, this] {readFile(completePath, fileName);}));
-    }
-
-    std::for_each(searchers.begin(), searchers.end(), std::mem_fn(&std::thread::join));
+    
+    launchSearchers(searchers, filesNames, numFiles);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-    searchRequestQueueMutex.lock(); 
-    searchRequestQueue.pop();
-    searchRequestQueueMutex.unlock(); 
 
+    /* Pop a search request element */
+    searchRequestQueueMutex.lock();
+    searchRequestQueue.pop();
+    searchRequestQueueMutex.unlock();
+
+    /* Notify that the search request queue has changed */
+    searchRequestCV.notify_one();
     //aqui utilizar promise and uture para sincronizar todoos los hijos
     //RECORDAR: utilizar promise y future para propagar las excepciones 
     //Aqui escribirá en un archivo para cada usuario.
-
-    //std::cout << "result size: " << result_list.size() << std::endl;
-    if (result_list.size() != 0) {
-        for (int i = 0; i < result_list.size(); i++) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            result_list[i].writeResultToFile(user->getId());
-        }
-    } else {
-        std::cout << BHIRED << " [BR] No se ha encontrado resultados para el usuario " << user->getId() << BHIWHITE << std::endl; 
-    }
-
-
-    /* Decrease the semcounter so other users can access */
-    //semConcurrentBrowser.signal();
-    searchRequestCV.notify_one();
+    generateResults();
 }
 
 /* Reads the file and checks if there's some error */
@@ -140,7 +143,6 @@ int Browser::readFile(std::string completePath, std::string fileName) {
     }
 
     while (!inFile.eof()) {
-        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
         std::getline(inFile,eachLine);
         findWord(eachLine,numLine,fileName);
         numLine++;
@@ -156,49 +158,43 @@ void Browser::requestCreditRecharge() {
     rechargeCreditRequestMutex.lock();
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     std::cout << BHIGREEN << " [MG] User n: " << user->getId() << 
-                " requests a credit top up " << BHIWHITE << std::endl;
+                " requests a credit recharge" << BHIWHITE << std::endl;
 
     rechargeCreditRequestQueue.push(user);
     paymentGatewayCV.notify_one();
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    std::cout << BHIGREEN << " [MG] User's credit" << user->getId() << " topped up to " 
+    std::cout << BHIGREEN << " [MG] User's credit " << user->getId() << " recharge to " 
         << user->getCurrentCredit() << " credits." << BHIWHITE << std::endl;
 } 
 
-/*  */
+/* Decrease credit of free and premium limited users */
 void Browser::manageUserCredit(){
-
-    //este metodo tal vez deberia estar en User?
-
    if(user->getTypeUser()== 1 || user->getTypeUser()==2){
        user->setCurrentCredit(user->getCurrentCredit()-1);
    }
 }
 
+/* Check if users credit is zero */
 bool Browser::checkCredit() {
 
     bool enoughCredit = false; 
 
     switch (user->getTypeUser()) {
         case 1:
-
             if (user->getCurrentCredit() > 0)
                 enoughCredit = true;
-
             break;
         case 2:
-
-            if (user->getCurrentCredit() > 0) {
-                enoughCredit = true;
-            } else {
+            if (user->getCurrentCredit() == 0)
                 requestCreditRecharge();
-                enoughCredit = true;
-            }
+            enoughCredit = true;
             break;
         case 3:
             enoughCredit = true;
             break;
     }
+
+    return enoughCredit;
 }
 
 /* Method used for finding a word within a given string */
@@ -222,20 +218,18 @@ void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
             if (i == 0){
                 previousWord = "";
                 nextWord = lineVector.at(i+1);
-
             } else if(i == lineVector.size()-1){
                 nextWord = "";
                 previousWord = lineVector.at(i-1);
-
             } else{
                 previousWord = lineVector.at(i-1);
                 nextWord = lineVector.at(i+1);
             }
+
             Result foundResult(previousWord, nextWord, eachWord, (myLine+1), fileName);
             manageUserCredit();
             std::lock_guard<std::mutex> lock(*mtx);
             result_list.push_back(foundResult);
-            
         }
     }
 }

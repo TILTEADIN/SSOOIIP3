@@ -20,8 +20,7 @@
 #define MATERIAL_PATH "material2/"
 
 SemCounter semConcurrentBrowser(CONCURRENT_REQUESTS);
-//std::priority_queue<int> requestQueue;
-//std::queue<SearchRequest> searchQueue;
+
 std::condition_variable paymentGatewayCV, searchRequestCV;;
 std::mutex rechargeCreditRequestMutex, paymentGatewayMutex, searchRequestMutex, searchRequestQueueMutex;
 std::queue<User*> rechargeCreditRequestQueue;

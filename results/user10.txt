@@ -1,2 +1,0 @@
- On file: prueba2.txt --> Matching Result at Line: 6 --> palabra titulo a
- On file: prueba.txt --> Matching Result at Line: 5 --> un titulo 
