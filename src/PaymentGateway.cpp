@@ -5,7 +5,6 @@
 #include <condition_variable>
 #include <queue>
 #include <thread>
-
 #include "../include/definitions.h"
 
 class PaymentGateway {
@@ -27,23 +26,27 @@ public:
             std::unique_lock<std::mutex> ul(paymentGatewayMutex);
             paymentGatewayCV.wait(ul, [] {return (!rechargeCreditRequestQueue.empty() || endRequest);});
             
-            User *user = rechargeCreditRequestQueue.front();
+            //User *user = rechargeCreditRequestQueue.front();
+            
+            TopUpRequest request = std::move(rechargeCreditRequestQueue.front());
             rechargeCreditRequestQueue.pop();
 
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            std::cout << BHICYAN << " [PG] User " << user->getId() << 
+            std::cout << BHICYAN << " [PG] User " << request.user->getId() << 
                     " requests a credit recharge" << BHIWHITE << std::endl;
 
             int credit = generateRandomNumber(MAXIMUM_CREDIT);
-            user->setCurrentCredit(credit);
-            user->setTotalCredit(user->getTotalCredit()+credit);
+            
+            request.user->setCurrentCredit(credit);
+            request.user->setTotalCredit(request.user->getTotalCredit()+credit);
 
-            std::cout << BHICYAN << " [PG] User "<< user->getId() << 
-                    " account has been recharge with " << user->getCurrentCredit() << " credits" << BHIWHITE << std::endl;
+            std::cout << BHICYAN << " [PG] User "<< request.user->getId() << 
+                    " account has been recharge with " << request.user->getCurrentCredit() << " credits" << BHIWHITE << std::endl;
             
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-            rechargeCreditRequestMutex.unlock();
+            //rechargeCreditRequestMutex.unlock();
+            request.clientRequestPromise.set_value(credit);
         }
     }
 };

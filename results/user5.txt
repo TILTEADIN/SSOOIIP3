@@ -1,0 +1,3 @@
+ On file: El_Oro_Y_La_Ceniza_Abecassis_Eliette.txt --> Matching Result at Line: 234 --> El profano solamente
+ On file: Abe_Shana_La_ultima_sirena.txt --> Matching Result at Line: 353 --> peligroso, profano. Prohibido.
+ On file: El_Oro_Y_La_Ceniza_Abecassis_Eliette.txt --> Matching Result at Line: 4296 --> Amor Profano. Desde

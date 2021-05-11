@@ -155,12 +155,18 @@ int Browser::readFile(std::string completePath, std::string fileName) {
 
 /* Request to payment service to recharge credit of a given user */
 void Browser::requestCreditRecharge() {
-    rechargeCreditRequestMutex.lock();
+    //rechargeCreditRequestMutex.lock();
+    TopUpRequest request(user);
+    rechargeCreditRequestQueue.push(std::move(request));
+    int credit = rechargeCreditRequestQueue.front().clientRequestFuture.get();
+    
+
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     std::cout << BHIGREEN << " [MG] User n: " << user->getId() << 
                 " requests a credit recharge" << BHIWHITE << std::endl;
 
-    rechargeCreditRequestQueue.push(user);
+
+
     paymentGatewayCV.notify_one();
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     std::cout << BHIGREEN << " [MG] User's credit " << user->getId() << " recharge to " 
@@ -204,7 +210,6 @@ void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
 	std::string previousWord = "",nextWord = "";
     std::string eachWord;  
     std::string str;
-
 	std::istringstream strStream(eachLine);
 	std::vector<std::string> lineVector;
     

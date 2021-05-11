@@ -65,7 +65,7 @@ int searchForClientType(int clientPreference, std::vector<User> clients) {
     return index;
 }
 
-/* Returns the king of user name */
+/* Returns the kind of user name */
 std::string getNameTypeUser(int typeUser) {
     std::string nameTypeUser;
 

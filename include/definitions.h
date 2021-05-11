@@ -11,8 +11,8 @@
 #include <unistd.h>
 
 #include "../include/colors.h"
-#include "../src/User.cpp"
 #include "../src/SemCounter.cpp"
+#include "../src/TopUpRequest.cpp"
 
 #define NUM_CLIENTS 5
 #define CONCURRENT_REQUESTS 5
@@ -23,7 +23,7 @@ SemCounter semConcurrentBrowser(CONCURRENT_REQUESTS);
 
 std::condition_variable paymentGatewayCV, searchRequestCV;;
 std::mutex rechargeCreditRequestMutex, paymentGatewayMutex, searchRequestMutex, searchRequestQueueMutex;
-std::queue<User*> rechargeCreditRequestQueue;
+std::queue<TopUpRequest> rechargeCreditRequestQueue;
 std::queue<SearchRequest> searchRequestQueue;
 
 bool endRequest = false;
