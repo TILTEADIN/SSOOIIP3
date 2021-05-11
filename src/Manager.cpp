@@ -6,10 +6,10 @@
 #include "../src/PaymentGateway.cpp"
 #include "../src/Browser.cpp"
 
-std::vector<std::string> diccionary = {"prueba","cuadro","presidente","vendedores",
-                                    "titulo","precio","castillo","brujula","beneficios",
-                                    "internet","equipo","compañeros","confiabilidad",
-                                    "brillante","ojos","comprension","historia"};
+std::vector<std::string> diccionary = {"prueba","cuadro","tenue","vendedores",
+                                    "titulo","acantilados","castillo","brujula","beneficios",
+                                    "internet","complacido","pretender","confiabilidad",
+                                    "profano","sorpresa","comprension","admirador"};
 
 /* Select a random word for the diccionary */
 std::string selectRandomWord() {

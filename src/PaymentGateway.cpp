@@ -34,7 +34,9 @@ public:
             std::cout << BHICYAN << " [PG] User " << user->getId() << 
                     " requests a credit recharge" << BHIWHITE << std::endl;
 
-            user->setCurrentCredit(generateRandomNumber(MAXIMUM_CREDIT));
+            int credit = generateRandomNumber(MAXIMUM_CREDIT);
+            user->setCurrentCredit(credit);
+            user->setTotalCredit(user->getTotalCredit()+credit);
 
             std::cout << BHICYAN << " [PG] User "<< user->getId() << 
                     " account has been recharge with " << user->getCurrentCredit() << " credits" << BHIWHITE << std::endl;

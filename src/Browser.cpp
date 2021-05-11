@@ -162,9 +162,10 @@ void Browser::requestCreditRecharge() {
 
     rechargeCreditRequestQueue.push(user);
     paymentGatewayCV.notify_one();
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     std::cout << BHIGREEN << " [MG] User's credit " << user->getId() << " recharge to " 
-        << user->getCurrentCredit() << " credits." << BHIWHITE << std::endl;
+        << user->getCurrentCredit() << " credits. (total: " << user->getTotalCredit() 
+        << ")" << BHIWHITE << std::endl;
 } 
 
 /* Decrease credit of free and premium limited users */
@@ -215,13 +216,16 @@ void Browser::findWord(std::string eachLine, int myLine, std::string fileName){
         
         if (caseInsensitive(eachWord,user->getRequestedWord())){
             
-            if (i == 0){
+            if (i == 0 && i == lineVector.size()-1) {
+                previousWord = "";
+                nextWord = "";
+            } else if (i == 0) {
                 previousWord = "";
                 nextWord = lineVector.at(i+1);
-            } else if(i == lineVector.size()-1){
-                nextWord = "";
+            } else if (i == lineVector.size()-1) {
                 previousWord = lineVector.at(i-1);
-            } else{
+                nextWord = "";
+            } else {
                 previousWord = lineVector.at(i-1);
                 nextWord = lineVector.at(i+1);
             }

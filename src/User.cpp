@@ -16,7 +16,7 @@
 class User {
 	private:
 		int id;
-		int initialCredit;
+		int totalCredit;
 		int currentCredit;
 		int typeUser;
 		bool served;
@@ -27,13 +27,14 @@ class User {
 		//std::queue<SearchRequest> searchRequestQueue;
 		User(int id, int typeUser, std::string requestedWord);
 
-		int getInitialCredit();
+		int getTotalCredit();
 		int getCurrentCredit();
 		int getId();
 		int getTypeUser();
 		int getServed();
 		std::string getRequestedWord();
 		void setCurrentCredit(int currentCredit);
+		void setTotalCredit(int credit);
 		void setServed(bool served);
 		int generateRandomNumber(int max);
 };
@@ -45,22 +46,22 @@ class User {
 		this->served = false;
 		switch (typeUser) {
 			case 1:
-				this->initialCredit = MAX_FREE_RESULTS;
+				this->totalCredit = MAX_FREE_RESULTS;
 				break;
 			case 2:
-				this->initialCredit = generateRandomNumber(MAXIMUM_CREDIT);
+				this->totalCredit = generateRandomNumber(MAXIMUM_CREDIT);
 				break;
 			case 3:
-				this->initialCredit = -1;
+				this->totalCredit = -1;
 				break;
 		}
 		//this->requestedWord = searchRequestQueue.front().getRequestedWord();
 		//searchRequestQueue.pop();
-		this->currentCredit = initialCredit; //el saldo en el momento de la creación es el saldo incial
+		this->currentCredit = totalCredit; //el saldo en el momento de la creación es el saldo incial
 	}
 
-	int User::getInitialCredit(){
-		return initialCredit;
+	int User::getTotalCredit(){
+		return totalCredit;
 	}
 
 	int User::getCurrentCredit(){
@@ -88,6 +89,10 @@ class User {
 
 	void User::setServed(bool served) {
 		this->served = served;
+	}
+
+	void User::setTotalCredit(int credit) {
+		this->totalCredit = credit;
 	}
 
 	int User::generateRandomNumber(int max){

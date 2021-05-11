@@ -14,10 +14,10 @@
 #include "../src/User.cpp"
 #include "../src/SemCounter.cpp"
 
-#define NUM_CLIENTS 10
+#define NUM_CLIENTS 5
 #define CONCURRENT_REQUESTS 5
 #define MAX_LEN 256
-#define MATERIAL_PATH "material2/"
+#define MATERIAL_PATH "material/"
 
 SemCounter semConcurrentBrowser(CONCURRENT_REQUESTS);
 
