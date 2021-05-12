@@ -20,7 +20,8 @@
 #define LIMITED_PREMIUM 2
 #define UNLIMITED_PREMIUM 3
 
-//Cada usuario tiene asociada una peticion, de manera que nos ahorramos crear clases con poca responsabilidad
+//Each User will be treated with a correlation 1 User-> 1 Search Request once the Browser receives the array of Clients
+
 class User {
 	private:
 		int id;
@@ -50,6 +51,7 @@ class User {
 		this->id = id;
 		this->requestedWord = requestedWord;
 		this->served = false;
+
 		switch (typeUser) {
 			case FREE:
 				this->totalCredit = MAX_FREE_RESULTS;
@@ -61,7 +63,11 @@ class User {
 				this->totalCredit = -1;
 				break;
 		}
-		this->currentCredit = totalCredit; /* Total credits, initial and recharged ones */
+		/*Total credits, initial and recharged ones
+		Must be coinciding with results with some error margin,
+		there can be some extra credits after recharging is done 
+		and all the possible results have been found*/
+		this->currentCredit = totalCredit; 
 	}
 
 	int User::getTotalCredit(){
@@ -100,6 +106,8 @@ class User {
 	}
 
 	int User::generateRandomNumber(int max){
+		//Had some trouble with the same number being generated no matter what the seed was
+		//Decided to put a sleep for 1 nano-second in order to keep changing the generated number.
     	usleep(1000);
     	struct timespec ts;
     	clock_gettime(CLOCK_MONOTONIC, &ts);

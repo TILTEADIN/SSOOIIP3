@@ -35,16 +35,16 @@ public:
             std::unique_lock<std::mutex> ul(paymentGatewayMutex);
             paymentGatewayCV.wait(ul, [] {return (!rechargeCreditRequestQueue.empty() || endRequest);});
             
-            //User *user = rechargeCreditRequestQueue.front();
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
+            //The rechargeCreditRequestQueue cointains TopUpRequest objects which  the User and a set of Promise & Future
             TopUpRequest request = std::move(rechargeCreditRequestQueue.front());
 
             std::cout << BHICYAN << " [PG] User " << request.user->getId() << 
                     " requests a credit recharge" << BHIWHITE << std::endl;
 
             int credit = generateRandomNumber(MAXIMUM_CREDIT);
-            
+        
             request.user->setCurrentCredit(credit);
             request.user->setTotalCredit(request.user->getTotalCredit()+credit);
 
@@ -53,7 +53,6 @@ public:
             
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-            //rechargeCreditRequestMutex.unlock();
             request.clientRequestPromise.set_value(credit);
             rechargeCreditRequestMutex.lock();
             rechargeCreditRequestQueue.pop();

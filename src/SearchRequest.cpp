@@ -3,7 +3,7 @@
  * Program name     : SearchRequest.cpp
  * Authors          : Alberto Vázquez y Eduardo Eiroa
  * Date created     : 12/05/2021
- * Purpose          : Class that represent a search request of a word
+ * Purpose          : Class that represents the search request of a word
  *********************************************************************/
 
 #ifndef _SEARCH_REQUEST_

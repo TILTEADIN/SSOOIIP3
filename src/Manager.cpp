@@ -3,7 +3,9 @@
  * Program name     : Manager.cpp
  * Authors          : Alberto Vázquez y Eduardo Eiroa
  * Date created     : 12/05/2021
- * Purpose          : Create users and launch thread for each user
+ * Purpose          : Creates users and launches as many threads
+                      for each user as books the are on the /material
+                      folder
  ******************************************************************/
 
 #ifndef _MANAGER_
@@ -19,7 +21,8 @@ std::vector<std::string> diccionary = {"prueba","cuadro","tenue","vendedores",
                                     "internet","complacido","pretender","confiabilidad",
                                     "profano","sorpresa","comprension","admirador"};
 
-/* Select a random word for the diccionary */
+
+/* Select a random word of the diccionary */
 std::string selectRandomWord() {
     int num = generateRandomNumber(diccionary.size())-1;
     std::string word = diccionary[num];
@@ -53,8 +56,8 @@ void installSignalHandler() {
 
 /* Returns a client index that better matchs with client preference */
 int searchForClientType(int clientPreference, std::vector<User> clients) {
-    int index = -1; /* Returns -1 if there is no user without being attended */
-
+    int index = -1; /* Returns -1 if there is no user has already been served */
+    /*This piece of code fullfills the 80-20 ratio between premium users and the free*/
     for (int i = 0; i < clients.size(); i++) {
         if (!clients[i].getServed()) {
             if (clientPreference > 8){

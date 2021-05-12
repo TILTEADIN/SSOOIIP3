@@ -3,7 +3,7 @@
  * Program name     : Result.cpp
  * Authors          : Alberto Vázquez y Eduardo Eiroa
  * Date created     : 12/05/2021
- * Purpose          : Class that represent a found result by searchers
+ * Purpose          : Class that represents a found result by searchers
  **********************************************************************/
 
 #ifndef _RESULT_
@@ -15,7 +15,7 @@
 #include <string>
 #include <sstream>
 
-/* Class used for storing the Results found along the texts */
+/* Class used for storing the Results found along the books */
 class Result{
     private:
         int line;
@@ -65,10 +65,10 @@ std::string Result::getFileName() {
     return this->fileName;
 }
 
-/* Write the results of found words in one file for each user */
+// Write the results of found words in one file for each user 
 void Result::writeResultToFile(int userID){
     char path [256];
-    sprintf (path, "./results/user%d.txt", userID); /* Name of file of each user results */
+    sprintf (path, "./results/user%d.txt", userID); //Formats the name of the files to be created
     std::ofstream file;
     std::stringstream auxiliaryFormatting;
 

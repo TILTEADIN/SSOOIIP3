@@ -4,7 +4,8 @@
  * Authors          : Alberto Vázquez y Eduardo Eiroa
  * Date created     : 12/05/2021
  * Purpose          : Class that launch child searchers in order
- *                    to find words associated with users
+ *                    to find words associated with users in each
+                      of the assigned files
  ******************************************************************/
 
 #ifndef _BROWSER_
@@ -98,18 +99,6 @@ void Browser::launchSearchers(std::vector<std::thread> &searchers, std::vector<s
     std::for_each(searchers.begin(), searchers.end(), std::mem_fn(&std::thread::join));
 }
 
-/* Write results for each users file results */
-void Browser::generateResults() {
-    if (result_list.size() != 0) {
-        for (int i = 0; i < result_list.size(); i++) {
-            //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            result_list[i].writeResultToFile(user->getId());
-        }
-    } else {
-        std::cout << BHIRED << " [BR] No results found for the user " << user->getId() << BHIWHITE << std::endl; 
-    }
-}
-
 /* Launch the browser children for each file in material directory */
 void Browser::mainBrowser() {
     std::vector<std::string> filesNames;
@@ -158,76 +147,7 @@ int Browser::readFile(std::string completePath, std::string fileName) {
         std::cout << BHIRED << " [BR] An exception ocurred: " << e.what() << std::endl;
     }
 
-    /*
-    if (!inFile) {
-        std::cout << BHIRED << " [BR] Unable to open the file" << BHIWHITE << std::endl; 
-        std::exit(EXIT_FAILURE);
-    }*/
-
     return 0;
-}
-
-/* Request to payment service to recharge credit of a given user */
-void Browser::requestCreditRecharge() {
-    //rechargeCreditRequestMutex.lock();
-    TopUpRequest request(user);
-
-    rechargeCreditRequestMutex.lock();
-    rechargeCreditRequestQueue.push(std::move(request));
-    rechargeCreditRequestMutex.unlock();
-    
-    paymentGatewayCV.notify_one();
-    //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    std::cout << BHIYELLOW << " [BG] User " << user->getId() << 
-                " requests a credit recharge" << BHIWHITE << std::endl;
-
-    //std::cout << "hola " << rechargeCreditRequestQueue.size() << std::endl;
-    rechargeCreditRequestMutex.lock();
-    int credit = rechargeCreditRequestQueue.front().clientRequestFuture.get();
-    rechargeCreditRequestMutex.unlock();
-
-    //std::cout << "adios" << std::endl;
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    
-    std::cout << BHIYELLOW << " [BG] User's credit " << user->getId() << " recharge to " 
-        << user->getCurrentCredit() << " credits. (total: " << user->getTotalCredit() 
-        << ")" << BHIWHITE << std::endl;
-}   
-
-/* Decrease credit of free and premium limited users */
-void Browser::manageUserCredit(){
-   if(user->getTypeUser()== 1 || user->getTypeUser()==2){
-       semUserCredit.lock();
-       user->setCurrentCredit(user->getCurrentCredit()-1);
-       semUserCredit.unlock();
-   }
-}
-
-/* Check if users credit is zero */
-bool Browser::checkCredit() {
-
-    bool enoughCredit = false; 
-
-    semUserCredit.lock();
-    switch (user->getTypeUser()) {
-        case 1:
-            if (user->getCurrentCredit() > 0)
-                enoughCredit = true;
-            break;
-        case 2:
-            if (user->getCurrentCredit() == 0)
-                requestCreditRecharge();
-            enoughCredit = true;
-            break;
-        case 3:
-            enoughCredit = true;
-            break;
-    }
-    semUserCredit.unlock();
-
-    return enoughCredit;
 }
 
 /* Method used for finding a word within a given string */
@@ -294,5 +214,80 @@ bool Browser::caseInsensitive(std::string eachWord, std::string objectiveWord){
     }
 
     return check;
+}
+
+/* Decrease credit of free and premium limited users */
+void Browser::manageUserCredit(){
+   if(user->getTypeUser()== 1 || user->getTypeUser()==2){
+       semUserCredit.lock();
+       user->setCurrentCredit(user->getCurrentCredit()-1);
+       semUserCredit.unlock();
+   }
+}
+
+/* Check if users credit is zero */
+bool Browser::checkCredit() {
+
+    bool enoughCredit = false; 
+
+    semUserCredit.lock();
+    switch (user->getTypeUser()) {
+        case 1:
+            if (user->getCurrentCredit() > 0)
+                enoughCredit = true;
+            break;
+        case 2:
+            if (user->getCurrentCredit() == 0)
+                requestCreditRecharge();
+            enoughCredit = true;
+            break;
+        case 3:
+            enoughCredit = true;
+            break;
+    }
+    semUserCredit.unlock();
+
+    return enoughCredit;
+}
+
+/* Request to payment service to recharge credit of a given user */
+void Browser::requestCreditRecharge() {
+    //rechargeCreditRequestMutex.lock();
+    TopUpRequest request(user);
+
+    rechargeCreditRequestMutex.lock();
+    rechargeCreditRequestQueue.push(std::move(request));
+    rechargeCreditRequestMutex.unlock();
+    
+    paymentGatewayCV.notify_one();
+    //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    std::cout << BHIYELLOW << " [BG] User " << user->getId() << 
+                " requests a credit recharge" << BHIWHITE << std::endl;
+
+    //std::cout << "hola " << rechargeCreditRequestQueue.size() << std::endl;
+    rechargeCreditRequestMutex.lock();
+    int credit = rechargeCreditRequestQueue.front().clientRequestFuture.get();
+    rechargeCreditRequestMutex.unlock();
+
+    //std::cout << "adios" << std::endl;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    
+    std::cout << BHIYELLOW << " [BG] User's credit " << user->getId() << " recharge to " 
+        << user->getCurrentCredit() << " credits. (total: " << user->getTotalCredit() 
+        << ")" << BHIWHITE << std::endl;
+}   
+
+/* Write results for each users file results */
+void Browser::generateResults() {
+    if (result_list.size() != 0) {
+        for (int i = 0; i < result_list.size(); i++) {
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            result_list[i].writeResultToFile(user->getId());
+        }
+    } else {
+        std::cout << BHIRED << " [BR] No results found for the user " << user->getId() << BHIWHITE << std::endl; 
+    }
 }
 #endif
