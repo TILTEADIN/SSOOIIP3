@@ -1,4 +1,12 @@
-//REGULAR COLORS
+/******************************************************************
+ * Project          : Práctica 3 de Sistemas Operativos II
+ * Program name     : colors.h
+ * Authors          : Alberto Vázquez y Eduardo Eiroa
+ * Date created     : 12/05/2021
+ * Purpose          : Define multiple colors with ANSI escape code
+ ******************************************************************/
+
+/* REGULAR COLORS */
 #define BLACK "\e[0;30m"
 #define RED "\e[0;31m"
 #define GREEN "\e[0;32m"
@@ -8,7 +16,7 @@
 #define CYAN "\e[0;36m"
 #define WHITE "\e[0;37m"
 
-//BOLD
+/* BOLD */
 #define BBLACK "\e[1;30m"
 #define BRED "\e[1;31m"
 #define BGREEN "\e[1;32m"
@@ -18,7 +26,7 @@
 #define BCYAN "\e[1;36m"
 #define BWHITE "\e[1;37m"
 
-//UNDERLINE
+/* UNDERLINE */
 #define UBLACK "\e[4;30m"
 #define URED "\e[4;31m"
 #define UGREEN "\e[4;32m"
@@ -28,7 +36,7 @@
 #define UCYAN "\e[4;36m"
 #define UWHITE "\e[4;37m"
 
-//BACKGROUND
+/* BACKGROUND */
 #define BGBLACK "\e[40m"
 #define BGRED "\e[41m"
 #define BGGREEN "\e[42m"
@@ -38,7 +46,7 @@
 #define BGCYAN "\e[46m"
 #define BGWHITE "\e[47m"
 
-//HIGH INTENSITY
+/* HIGH INTENSITY */
 #define HIBLACK "\e[0;90m"
 #define HIRED "\e[0;91m"
 #define HIGREEN "\e[0;92m"
@@ -48,7 +56,7 @@
 #define HICYAN "\e[0;96m"
 #define HIWHITE "\e[0;97m"
 
-//BOLD HIGH INTENSITY
+/* BOLD HIGH INTENSITY */
 #define BHIBLACK "\e[1;90m"
 #define BHIRED "\e[1;91m"
 #define BHIGREEN "\e[1;92m"
@@ -58,7 +66,7 @@
 #define BHICYAN "\e[1;96m"
 #define BHIWHITE "\e[1;97m"
 
-//HIGH INTENSITY BACKGROUNDS
+/* HIGH INTENSITY BACKGROUNDS */
 #define HIBBLACK "\e[1;100m"
 #define HIBRED "\e[1;101m"
 #define HIBGREEN "\e[1;102m"

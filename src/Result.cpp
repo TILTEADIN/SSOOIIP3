@@ -1,5 +1,14 @@
+/**********************************************************************
+ * Project          : Práctica 3 de Sistemas Operativos II
+ * Program name     : Result.cpp
+ * Authors          : Alberto Vázquez y Eduardo Eiroa
+ * Date created     : 12/05/2021
+ * Purpose          : Class that represent a found result by searchers
+ **********************************************************************/
+
 #ifndef _RESULT_
 #define _RESULT_
+
 #include <iostream>
 #include <fstream>
 #include <thread>

@@ -1,18 +1,26 @@
+/******************************************************************
+ * Project          : Práctica 3 de Sistemas Operativos II
+ * Program name     : User.cpp
+ * Authors          : Alberto Vázquez y Eduardo Eiroa
+ * Date created     : 12/05/2021
+ * Purpose          : Class that represents a user/client
+ ******************************************************************/
+
 #ifndef _USER_
 #define _USER_
-#include <queue>
 
-#include "../src/SearchRequest.cpp"
+#include <queue>
 #include <unistd.h>
 
-#define FREE 0
-#define LIMITED_VIP 1
-#define UNLIMITED_VIP 2
+#include "../src/SearchRequest.cpp"
+
 #define MAX_FREE_RESULTS 5
 #define MAXIMUM_CREDIT 15
+#define FREE 1
+#define LIMITED_PREMIUM 2
+#define UNLIMITED_PREMIUM 3
 
 //Cada usuario tiene asociada una peticion, de manera que nos ahorramos crear clases con poca responsabilidad
-
 class User {
 	private:
 		int id;
@@ -21,10 +29,8 @@ class User {
 		int typeUser;
 		bool served;
 		std::string requestedWord;
-		//std::string requestedWord;
 
 	public:
-		//std::queue<SearchRequest> searchRequestQueue;
 		User(int id, int typeUser, std::string requestedWord);
 
 		int getTotalCredit();
@@ -45,19 +51,17 @@ class User {
 		this->requestedWord = requestedWord;
 		this->served = false;
 		switch (typeUser) {
-			case 1:
+			case FREE:
 				this->totalCredit = MAX_FREE_RESULTS;
 				break;
-			case 2:
+			case LIMITED_PREMIUM:
 				this->totalCredit = generateRandomNumber(MAXIMUM_CREDIT);
 				break;
-			case 3:
+			case UNLIMITED_PREMIUM:
 				this->totalCredit = -1;
 				break;
 		}
-		//this->requestedWord = searchRequestQueue.front().getRequestedWord();
-		//searchRequestQueue.pop();
-		this->currentCredit = totalCredit; //el saldo en el momento de la creación es el saldo incial
+		this->currentCredit = totalCredit; /* Total credits, initial and recharged ones */
 	}
 
 	int User::getTotalCredit(){

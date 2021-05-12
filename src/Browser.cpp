@@ -1,3 +1,12 @@
+/******************************************************************
+ * Project          : Práctica 3 de Sistemas Operativos II
+ * Program name     : Browser.cpp
+ * Authors          : Alberto Vázquez y Eduardo Eiroa
+ * Date created     : 12/05/2021
+ * Purpose          : Class that launch child searchers in order
+ *                    to find words associated with users
+ ******************************************************************/
+
 #ifndef _BROWSER_
 #define _BROWSER_
 
@@ -93,7 +102,7 @@ void Browser::launchSearchers(std::vector<std::thread> &searchers, std::vector<s
 void Browser::generateResults() {
     if (result_list.size() != 0) {
         for (int i = 0; i < result_list.size(); i++) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             result_list[i].writeResultToFile(user->getId());
         }
     } else {
@@ -123,9 +132,8 @@ void Browser::mainBrowser() {
 
     /* Notify that the search request queue has changed */
     searchRequestCV.notify_one();
-    //aqui utilizar promise and uture para sincronizar todoos los hijos
-    //RECORDAR: utilizar promise y future para propagar las excepciones 
-    //Aqui escribirá en un archivo para cada usuario.
+
+    /* Write found results on files */
     generateResults();
 }
 
@@ -135,20 +143,26 @@ int Browser::readFile(std::string completePath, std::string fileName) {
     std::string eachLine;
     int numLine = 0;
 
-    inFile.open(completePath);
+    try {
+        inFile.open(completePath);
 
+        while (!inFile.eof()) {
+            std::getline(inFile,eachLine);
+            findWord(eachLine,numLine,fileName);
+            numLine++;
+        }
+
+        inFile.close();
+
+    } catch (std::exception &e) {
+        std::cout << BHIRED << " [BR] An exception ocurred: " << e.what() << std::endl;
+    }
+
+    /*
     if (!inFile) {
         std::cout << BHIRED << " [BR] Unable to open the file" << BHIWHITE << std::endl; 
-        std::exit(EXIT_FAILURE); /* terminate with error */
-    }
-
-    while (!inFile.eof()) {
-        std::getline(inFile,eachLine);
-        findWord(eachLine,numLine,fileName);
-        numLine++;
-    }
-
-    inFile.close();
+        std::exit(EXIT_FAILURE);
+    }*/
 
     return 0;
 }
@@ -157,27 +171,37 @@ int Browser::readFile(std::string completePath, std::string fileName) {
 void Browser::requestCreditRecharge() {
     //rechargeCreditRequestMutex.lock();
     TopUpRequest request(user);
-    rechargeCreditRequestQueue.push(std::move(request));
-    int credit = rechargeCreditRequestQueue.front().clientRequestFuture.get();
-    
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    std::cout << BHIGREEN << " [MG] User n: " << user->getId() << 
+    rechargeCreditRequestMutex.lock();
+    rechargeCreditRequestQueue.push(std::move(request));
+    rechargeCreditRequestMutex.unlock();
+    
+    paymentGatewayCV.notify_one();
+    //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    std::cout << BHIYELLOW << " [BG] User " << user->getId() << 
                 " requests a credit recharge" << BHIWHITE << std::endl;
 
+    //std::cout << "hola " << rechargeCreditRequestQueue.size() << std::endl;
+    rechargeCreditRequestMutex.lock();
+    int credit = rechargeCreditRequestQueue.front().clientRequestFuture.get();
+    rechargeCreditRequestMutex.unlock();
 
+    //std::cout << "adios" << std::endl;
 
-    paymentGatewayCV.notify_one();
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    std::cout << BHIGREEN << " [MG] User's credit " << user->getId() << " recharge to " 
+    
+    std::cout << BHIYELLOW << " [BG] User's credit " << user->getId() << " recharge to " 
         << user->getCurrentCredit() << " credits. (total: " << user->getTotalCredit() 
         << ")" << BHIWHITE << std::endl;
-} 
+}   
 
 /* Decrease credit of free and premium limited users */
 void Browser::manageUserCredit(){
    if(user->getTypeUser()== 1 || user->getTypeUser()==2){
+       semUserCredit.lock();
        user->setCurrentCredit(user->getCurrentCredit()-1);
+       semUserCredit.unlock();
    }
 }
 
@@ -186,6 +210,7 @@ bool Browser::checkCredit() {
 
     bool enoughCredit = false; 
 
+    semUserCredit.lock();
     switch (user->getTypeUser()) {
         case 1:
             if (user->getCurrentCredit() > 0)
@@ -200,6 +225,7 @@ bool Browser::checkCredit() {
             enoughCredit = true;
             break;
     }
+    semUserCredit.unlock();
 
     return enoughCredit;
 }

@@ -1,5 +1,13 @@
-#ifndef MANAGER
-#define MANAGER
+/******************************************************************
+ * Project          : Práctica 3 de Sistemas Operativos II
+ * Program name     : Manager.cpp
+ * Authors          : Alberto Vázquez y Eduardo Eiroa
+ * Date created     : 12/05/2021
+ * Purpose          : Create users and launch thread for each user
+ ******************************************************************/
+
+#ifndef _MANAGER_
+#define _MANAGER_
 
 #include <csignal>
 
@@ -50,12 +58,12 @@ int searchForClientType(int clientPreference, std::vector<User> clients) {
     for (int i = 0; i < clients.size(); i++) {
         if (!clients[i].getServed()) {
             if (clientPreference > 8){
-                if(clients[i].getTypeUser() == 1) {
+                if(clients[i].getTypeUser() == FREE) {
                     index = i;
                     break;
                 }
             } else {
-                if(clients[i].getTypeUser() == 2 || clients[i].getTypeUser() == 3){
+                if(clients[i].getTypeUser() == LIMITED_PREMIUM || clients[i].getTypeUser() == UNLIMITED_PREMIUM){
                     index = i;
                     break;
                 }
@@ -65,18 +73,18 @@ int searchForClientType(int clientPreference, std::vector<User> clients) {
     return index;
 }
 
-/* Returns the kind of user name */
+/* Returns the type of user name */
 std::string getNameTypeUser(int typeUser) {
     std::string nameTypeUser;
 
     switch(typeUser){
-        case 1:
+        case FREE:
             nameTypeUser = "free";
             break;
-        case 2:
+        case LIMITED_PREMIUM:
             nameTypeUser = "limited premimum";
             break;
-        case 3:
+        case UNLIMITED_PREMIUM:
             nameTypeUser = "unlimited premimum";
             break;
     }
@@ -111,7 +119,7 @@ void createUsers(std::vector<User> &clients) {
 /* Print info for each user */
 void printUserServedInfo(std::vector<User> clients, int index) {
 
-    if (clients[index].getTypeUser() == 1 || clients[index].getTypeUser() == 2) {
+    if (clients[index].getTypeUser() == FREE || clients[index].getTypeUser() == LIMITED_PREMIUM) {
         std::cout << BHIGREEN << " [MG] User " << clients[index].getId() << 
             " (" << getNameTypeUser(clients[index].getTypeUser()) << " : " << 
             clients[index].getCurrentCredit() << " credits) is being attended" << BHIWHITE << std::endl;
@@ -159,7 +167,6 @@ void startSearchRequests(std::vector<User> &clients) {
             std::cout << BHIGREEN << " [MG] Remaining users: " << clients.size() - ++numServedUsers << BHIWHITE << std::endl;
         } 
     }
-    
     std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
 }
 
@@ -180,6 +187,7 @@ int main(int argc, char *argv[]) {
     PaymentGateway pg;
     std::thread pgThread(std::ref(pg));
 
+    /* Main funcionality */
     cleanResults();
     createUsers(clients);
     startSearchRequests(clients);

@@ -1,3 +1,12 @@
+/******************************************************************
+ * Project          : Práctica 3 de Sistemas Operativos II
+ * Program name     : PaymentGateway.cpp
+ * Authors          : Alberto Vázquez y Eduardo Eiroa
+ * Date created     : 12/05/2021
+ * Purpose          : Payment service for top up requests 
+ *                    performed by users
+ ******************************************************************/
+
 #ifndef _PAYMENT_GATEWAY_
 #define _PAYMENT_GATEWAY_
 
@@ -27,11 +36,10 @@ public:
             paymentGatewayCV.wait(ul, [] {return (!rechargeCreditRequestQueue.empty() || endRequest);});
             
             //User *user = rechargeCreditRequestQueue.front();
-            
-            TopUpRequest request = std::move(rechargeCreditRequestQueue.front());
-            rechargeCreditRequestQueue.pop();
-
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+            TopUpRequest request = std::move(rechargeCreditRequestQueue.front());
+
             std::cout << BHICYAN << " [PG] User " << request.user->getId() << 
                     " requests a credit recharge" << BHIWHITE << std::endl;
 
@@ -47,6 +55,9 @@ public:
 
             //rechargeCreditRequestMutex.unlock();
             request.clientRequestPromise.set_value(credit);
+            rechargeCreditRequestMutex.lock();
+            rechargeCreditRequestQueue.pop();
+            rechargeCreditRequestMutex.unlock();
         }
     }
 };
