@@ -1,5 +1,0 @@
-Esto es otra prueba
-a ver si cuando crea los hilos
-crea varios segun el numero de archivos
-que haya en este directorio.
-el castillo del presidente.

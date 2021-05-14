@@ -1,3 +1,11 @@
+/*********************************************************************
+ * Project          : Práctica 3 de Sistemas Operativos II
+ * Program name     : SearchRequest.cpp
+ * Authors          : Alberto Vázquez y Eduardo Eiroa
+ * Date created     : 12/05/2021
+ * Purpose          : Class that represents the search request of a word
+ *********************************************************************/
+
 #ifndef _SEARCH_REQUEST_
 #define _SEARCH_REQUEST_
 #include <string>

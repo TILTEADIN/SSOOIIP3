@@ -1,32 +1,28 @@
-#ifndef MANAGER
-#define MANAGER
+/******************************************************************
+ * Project          : Práctica 3 de Sistemas Operativos II
+ * Program name     : Manager.cpp
+ * Authors          : Alberto Vázquez y Eduardo Eiroa
+ * Date created     : 12/05/2021
+ * Purpose          : Creates users and launches as many threads
+                      for each user as books the are on the /material
+                      folder
+ ******************************************************************/
+
+#ifndef _MANAGER_
+#define _MANAGER_
 
 #include <csignal>
 
 #include "../src/PaymentGateway.cpp"
 #include "../src/Browser.cpp"
 
-std::vector<std::string> diccionary = {"prueba","cuadro","presidente","vendedores",
-                                    "titulo","precio","castillo","brujula","beneficios",
-                                    "internet","equipo","compeñeros","confiabilidad",
-                                    "brillante","ojos","comprension","historia"};
+std::vector<std::string> diccionary = {"prueba","cuadro","tenue","vendedores",
+                                    "titulo","acantilados","castillo","brujula","beneficios",
+                                    "internet","complacido","pretender","confiabilidad",
+                                    "profano","sorpresa","comprension","admirador"};
 
-//ESTE METODO TIENE QUE ESTAR EN BROWSER o en definitions
-/* Request to payment service to recharge credit of a given user */
-void requestCreditRecharge(User *user) {
-    rechargeCreditRequestMutex.lock();
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    std::cout << BHIGREEN << " [MG] User n: " << user->getId() << 
-                " requests a credit top up " << BHIWHITE << std::endl;
 
-    rechargeCreditRequestQueue.push(user);
-    paymentGatewayCV.notify_one();
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    std::cout << BHIGREEN << " [MG] User's credit" << user->getId() << " topped up to " 
-        << user->getCurrentCredit() << " credits." << BHIWHITE << std::endl;
-}    
-
-/* Select a random word for the diccionary */
+/* Select a random word of the diccionary */
 std::string selectRandomWord() {
     int num = generateRandomNumber(diccionary.size())-1;
     std::string word = diccionary[num];
@@ -58,81 +54,147 @@ void installSignalHandler() {
     }
 }
 
-/* Ret */
-int searchForClientType(int clientPreference,std::vector<User> clients) {
-    int index;
-    
-    for (int i = 0; i < NUM_CLIENTS; i++) {
-        if (clientPreference > 7 ){
-            if(clients[i].getTypeUser() == 0)
-                index = i;
-        } else {
-            if(clients[i].getTypeUser() == 1 || clients[i].getTypeUser() == 2)
-                index = i;
+/* Returns a client index that better matchs with client preference */
+int searchForClientType(int clientPreference, std::vector<User> clients) {
+    int index = -1; /* Returns -1 if there is no user has already been served */
+    /*This piece of code fullfills the 80-20 ratio between premium users and the free*/
+    for (int i = 0; i < clients.size(); i++) {
+        if (!clients[i].getServed()) {
+            if (clientPreference > 8){
+                if(clients[i].getTypeUser() == FREE) {
+                    index = i;
+                    break;
+                }
+            } else {
+                if(clients[i].getTypeUser() == LIMITED_PREMIUM || clients[i].getTypeUser() == UNLIMITED_PREMIUM){
+                    index = i;
+                    break;
+                }
+            } 
         }
     }
-
     return index;
 }
 
+/* Returns the type of user name */
+std::string getNameTypeUser(int typeUser) {
+    std::string nameTypeUser;
 
-void deleteServedClients(std::vector<User> clients,std::vector<int> clientsToBeErased) { 
-            std::cout<<"EL tamaño es :"<<clientsToBeErased.size()<<std::endl;
-    while(!clientsToBeErased.empty()){
-        clients.erase(clients.begin()+clientsToBeErased.back());
-        clientsToBeErased.pop_back();
+    switch(typeUser){
+        case FREE:
+            nameTypeUser = "free";
+            break;
+        case LIMITED_PREMIUM:
+            nameTypeUser = "limited premimum";
+            break;
+        case UNLIMITED_PREMIUM:
+            nameTypeUser = "unlimited premimum";
+            break;
     }
+    return nameTypeUser;
+}
+
+/* Check if all clients are served to finish the main loop */
+bool allClientServed(std::vector<User> clients) {
+    int cnt = 0;
+    bool go = true;
+
+    for (int i = 0; i < clients.size(); i++) {
+        if (clients[i].getServed() == true) {
+            cnt++;
+        }
+    }
+
+    if (cnt == clients.size()) {
+        go = false;
+    }
+    return go;
+}
+
+/* Create the user's vector */
+void createUsers(std::vector<User> &clients) {
+    for (int i = 1; i <= NUM_CLIENTS; i++) {
+        /* Number three is passed as argument for generateRandomNumber so one of the three possible types of user is generated */
+        clients.push_back(User(i, generateRandomNumber(3), selectRandomWord(),std::chrono::high_resolution_clock::now()));
+    }
+}
+
+/* Print info for each user */
+void printUserServedInfo(std::vector<User> clients, int index) {
+
+    if (clients[index].getTypeUser() == FREE || clients[index].getTypeUser() == LIMITED_PREMIUM) {
+        std::cout << BHIGREEN << " [MG] User " << clients[index].getId() << 
+            " (" << getNameTypeUser(clients[index].getTypeUser()) << " : " << 
+            clients[index].getCurrentCredit() << " credits) is being attended" << BHIWHITE << std::endl;
+    } else {
+        std::cout << BHIGREEN << " [MG] User " << clients[index].getId() << 
+            " (" << getNameTypeUser(clients[index].getTypeUser()) << 
+            ") is being attended" << BHIWHITE << std::endl;
+    }
+}
+
+/* Create search requests for users */
+void startSearchRequests(std::vector<User> &clients) {
+
+    std::mutex sem;
+    std::vector<std::thread> threads;
+    std::mutex semSearchRequestQueue;
+    int numServedUsers = 0;
+
+    while(allClientServed(clients)){
+        
+        std::unique_lock<std::mutex> ul(semSearchRequestQueue);
+        searchRequestCV.wait(ul, [] {return (searchRequestQueue.size() < CONCURRENT_REQUESTS);});
+        ul.unlock();
+
+        int clientPreference = generateRandomNumber(10);
+        int index = searchForClientType(clientPreference, clients);
+
+        if (index != -1) { /* Check if there are clients to be served */
+
+            printUserServedInfo(clients, index);
+            clients[index].setServed(true); /* Set that client is being served */
+
+            SearchRequest sq(clients[index].getId(), clients[index].getRequestedWord());
+            searchRequestQueueMutex.lock(); 
+            searchRequestQueue.push(sq);
+            std::cout << BHIGREEN << " [MG] Users currently being attended: " << 
+                    searchRequestQueue.size() << " (max. " <<  CONCURRENT_REQUESTS << ")" 
+                    << BHIWHITE << std::endl;
+            searchRequestQueueMutex.unlock(); 
+                
+            threads.push_back(std::thread(Browser(&sem, &clients[index]))); /* Launch the main browser for each user */
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                
+            std::cout << BHIGREEN << " [MG] Remaining users: " << clients.size() - ++numServedUsers << BHIWHITE << std::endl;
+        } 
+    }
+    std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
+}
+
+/* Delete and create results directory */
+void cleanResults() {
+    system("rm -r results/");
+    system("mkdir results");
 }
 
 /* Main function */
 int main(int argc, char *argv[]) {
-    /* Install signal handler*/
+    
+    std::vector<User> clients;
+
+    /* Install signal handler */
     installSignalHandler();
     /* Launch payment service */
     PaymentGateway pg;
     std::thread pgThread(std::ref(pg));
 
-    std::vector<User> clients;
-    std::vector<std::thread> threads;
-
-    for (int i = 0; i < NUM_CLIENTS; i++) {
-        //std::cout << i << std::endl;
-        //std::queue<SearchRequest> searchRequestQueue1;
-        //searchRequestQueue1.push(SearchRequest(i,selectRandomWord()));
-        
-        //Number three is passed as argument for generateRandomNumber so one of the three possible types of user is generated
-        clients.push_back(User(i, generateRandomNumber(3), selectRandomWord()));
-    }
-    std::mutex sem;
-
-    while(!clients.empty()){
-
-        //PQ NO APARECEN LOS PRIMEROS 8, SOLO APEARECE EL ULTIMO
-
-
-        std::cout<<"entrando en el bucle"<<std::endl;
-        std::vector<int> clientsToBeErased;
-        
-        for (int i = 0; i < CONCURRENT_REQUESTS ; i++){
-            int clientPreference = generateRandomNumber(9);
-            std::cout<<"Preferencia es: "<<clientPreference<<std::endl;
-            if (clientPreference > 7){
-                //Enqueue free client
-                clientsToBeErased.push_back(searchForClientType(clientPreference,clients));
-                threads.push_back(std::thread(Browser(&sem, &clients[clientsToBeErased.back()])));
-            } else {
-                //Enqueue VIP client
-                clientsToBeErased.push_back(searchForClientType(clientPreference,clients));
-                threads.push_back(std::thread(Browser(&sem, &clients[clientsToBeErased.back()])));
-            }
-            semConcurrentBrowser.wait();
-            deleteServedClients(clients,clientsToBeErased);
-        }   
-        
-    }
-
-    std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
-    
+    /* Main funcionality */
+    cleanResults();
+    createUsers(clients);
+    startSearchRequests(clients);
+ 
     /* Notify to payment gateway that program ends */
     endRequest = true;
     paymentGatewayCV.notify_one();
@@ -141,12 +203,3 @@ int main(int argc, char *argv[]) {
     return 0;
 }   
 #endif
-
-/*
--Comprobar el saldo en resultado encontrado.
--Decrementar saldo de cliente no premium
--Recargar saldo a los cliente premium normales(Integrar el servio de pago)
--80% y 20% en la cola de peticiones.
-que al comienzo llegen todas las peticiones y dependiendo del tipo de usuario meta a unos a otros?? //HALF DONE
--Meter los resutlados en ficheros. DONE
-*/

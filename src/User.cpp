@@ -1,69 +1,82 @@
+/******************************************************************
+ * Project          : Práctica 3 de Sistemas Operativos II
+ * Program name     : User.cpp
+ * Authors          : Alberto Vázquez y Eduardo Eiroa
+ * Date created     : 12/05/2021
+ * Purpose          : Class that represents a user/client
+ ******************************************************************/
+
 #ifndef _USER_
 #define _USER_
+
 #include <queue>
+#include <unistd.h>
+#include <chrono>
 
 #include "../src/SearchRequest.cpp"
-#include <unistd.h>
 
-#define FREE 0
-#define LIMITED_VIP 1
-#define UNLIMITED_VIP 2
 #define MAX_FREE_RESULTS 5
 #define MAXIMUM_CREDIT 15
+#define FREE 1
+#define LIMITED_PREMIUM 2
+#define UNLIMITED_PREMIUM 3
 
-//Cada usuario tiene asociada una peticion, de manera que nos ahorramos crear clases con poca responsabilidad
+//Each User will be treated with a correlation 1 User-> 1 Search Request once the Browser receives the array of Clients
 
 class User {
 	private:
 		int id;
-		int initialCredit;
+		int totalCredit;
 		int currentCredit;
 		int typeUser;
 		bool served;
 		std::string requestedWord;
-		//std::string requestedWord;
+		std::chrono::high_resolution_clock::time_point startTime;
 
 	public:
-		//std::queue<SearchRequest> searchRequestQueue;
-		User(int id, int typeUser, std::string requestedWord);
+		User(int id, int typeUser, std::string requestedWord,std::chrono::high_resolution_clock::time_point start);
 
-		int getInitialCredit();
+		int getTotalCredit();
 		int getCurrentCredit();
 		int getId();
 		int getTypeUser();
 		int getServed();
 		std::string getRequestedWord();
+		std::chrono::high_resolution_clock::time_point getStartTime();
 		void setCurrentCredit(int currentCredit);
+		void setTotalCredit(int credit);
 		void setServed(bool served);
 		int generateRandomNumber(int max);
+		
 };
 
-	User::User(int id ,int typeUser,std::string requestedWord){
+	User::User(int id ,int typeUser,std::string requestedWord,std::chrono::high_resolution_clock::time_point start){
 		this->typeUser = typeUser;
-		this->currentCredit = initialCredit; //el saldo en el momento de la creación es el saldo incial
 		this->id = id;
 		this->requestedWord = requestedWord;
 		this->served = false;
+		this->startTime= std::chrono::high_resolution_clock::now();
+
 		switch (typeUser) {
-			case 0:
-				this->initialCredit = MAX_FREE_RESULTS;
-				this->currentCredit=initialCredit;
+			case FREE:
+				this->totalCredit = MAX_FREE_RESULTS;
 				break;
-			case 1:
-				this->initialCredit = generateRandomNumber(MAXIMUM_CREDIT);
-				this->currentCredit=initialCredit;
+			case LIMITED_PREMIUM:
+				this->totalCredit = generateRandomNumber(MAXIMUM_CREDIT);
 				break;
-			case 2:
-				this->initialCredit = -1;
-				this->currentCredit=initialCredit;
+			case UNLIMITED_PREMIUM:
+				this->totalCredit = -1;
 				break;
 		}
-		//this->requestedWord = searchRequestQueue.front().getRequestedWord();
-		//searchRequestQueue.pop();
+		/*Total credits, initial and recharged ones
+		Must be coinciding with results with some error margin,
+		there can be some extra credits after recharging is done 
+		and all the possible results have been found*/
+		this->currentCredit = totalCredit; 
 	}
-
-	int User::getInitialCredit(){
-		return initialCredit;
+	
+	int User::getTotalCredit(){
+		return totalCredit;
 	}
 
 	int User::getCurrentCredit(){
@@ -93,10 +106,22 @@ class User {
 		this->served = served;
 	}
 
+	void User::setTotalCredit(int credit) {
+		this->totalCredit = credit;
+	}
+
+	std::chrono::high_resolution_clock::time_point  User::getStartTime() {
+		return this->startTime;
+	}
+
 	int User::generateRandomNumber(int max){
-		usleep(3000);
-		srand((unsigned) time(0));
-		return ((rand() % max) + 1);
+		/*Had some trouble with the same number being generated no matter what the seed was;
+		decided to put a sleep for 1 nano-second in order to keep changing the generated number.*/
+    	usleep(1000);
+    	struct timespec ts;
+    	clock_gettime(CLOCK_MONOTONIC, &ts);
+    	srand((time_t)ts.tv_nsec); /* using nano-seconds instead of seconds */
+    	return ((rand() % max) + 1);
 	}
 
 #endif

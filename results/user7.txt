@@ -1,0 +1,4 @@
+ On file: 25_MANERAS_DE_GANARSE_A_LA_GENTE.txt --> Matching Result at Line: 173 --> gran admirador. No
+ On file: 25_MANERAS_DE_GANARSE_A_LA_GENTE.txt --> Matching Result at Line: 832 --> un admirador: 
+ On file: Abe_Shana_La_ultima_sirena.txt --> Matching Result at Line: 7277 --> otro admirador. 
+ On file: El_Oro_Y_La_Ceniza_Abecassis_Eliette.txt --> Matching Result at Line: 10320 --> ferviente admirador suyo.

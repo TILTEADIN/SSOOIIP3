@@ -1,12 +1,21 @@
+/**********************************************************************
+ * Project          : Práctica 3 de Sistemas Operativos II
+ * Program name     : Result.cpp
+ * Authors          : Alberto Vázquez y Eduardo Eiroa
+ * Date created     : 12/05/2021
+ * Purpose          : Class that represents a found result by searchers
+ **********************************************************************/
+
 #ifndef _RESULT_
 #define _RESULT_
+
 #include <iostream>
 #include <fstream>
 #include <thread>
 #include <string>
 #include <sstream>
-#include <stdio.h>
 
+/* Class used for storing the Results found along the books */
 class Result{
     private:
         int line;
@@ -23,10 +32,9 @@ class Result{
         std::string getNextWord();
         std::string getObjectiveWord();
         std::string getFileName();
-        void writeResultToFile(int userID);
+        void writeResultToFile(int userId);
 };
 
-/* Class used for storing the Results found along the texts */
 Result::Result(std::string previousWord, std::string nextWord, std::string objectiveWord, int line, std::string fileName) {
     this->previousWord = previousWord;
     this->nextWord = nextWord;
@@ -57,21 +65,28 @@ std::string Result::getFileName() {
     return this->fileName;
 }
 
-void::Result::writeResultToFile(int userID){
+// Write the results of found words in one file for each user 
+void Result::writeResultToFile(int userID){
+    char path [256];
+    sprintf (path, "./results/user%d.txt", userID); //Formats the name of the files to be created
+    std::ofstream file;
+    std::stringstream auxiliaryFormatting;
 
-  char path [256],result[256];
-  sprintf (path, "./results/user%d", userID); 
-  std::ofstream file(path);
-  std::stringstream auxiliary_formatting;
-  auxiliary_formatting << " On file: " <<fileName<<"--> Matching Result at Line: "<<line<<" --> "<<previousWord<<" "<<objectiveWord<<" "<<nextWord<< std::endl;;
-  //CHECKING ERRORS
-  //file.good();
-  std::string result_str=auxiliary_formatting.str();
-  file << result_str << std::endl;
-  // Close the file
-  file.close();
+    auxiliaryFormatting << " On file: " << fileName << 
+                        " --> Matching Result at Line: " << line << 
+                        " --> " << previousWord << " " << objectiveWord << 
+                        " " <<nextWord<< std::endl;;
 
+    std::string resultStr = auxiliaryFormatting.str();
 
+    if (file.good()) { /* If file exists append*/
+        file.open(path, std::ios_base::app);
+    } else { /* If file doesn't exists create */
+        file.open(path);
+    }
+
+    file << resultStr; /* Write on the file */
+
+    file.close();
 }
-
 #endif

@@ -1,5 +1,15 @@
-#ifndef DEFI
-#define DEFI
+/******************************************************************
+ * Project          : Práctica 3 de Sistemas Operativos II
+ * Program name     : definitions.h
+ * Authors          : Alberto Vázquez y Eduardo Eiroa
+ * Date created     : 12/05/2021
+ * Purpose          : Define multiple constant and functions used
+ *                    by different classes
+ ******************************************************************/
+
+#ifndef _DEFINITIONS_H_
+#define _DEFINITIONS_H_
+
 #include <cstdlib>
 #include <ctime>
 #include <condition_variable>
@@ -11,24 +21,21 @@
 #include <unistd.h>
 
 #include "../include/colors.h"
-#include "../src/User.cpp"
-#include "../src/SemCounter.cpp"
+#include "../src/TopUpRequest.cpp"
 
 #define NUM_CLIENTS 10
-#define CONCURRENT_REQUESTS 4
+#define CONCURRENT_REQUESTS 5
 #define MAX_LEN 256
-#define N_SEARCH_MAX 4
-#define MATERIAL_PATH "material2/"
+#define MATERIAL_PATH "material/"
 
-SemCounter semConcurrentBrowser(CONCURRENT_REQUESTS);
-std::priority_queue<int> requestQueue;
-std::queue<SearchRequest> searchQueue;
-std::condition_variable paymentGatewayCV, searchRequestCV, pushSearchRequest;
-std::mutex rechargeCreditRequestMutex, paymentGatewayMutex, searchRequestMutex, searchRequestQueueMutex;
-std::queue<User*> rechargeCreditRequestQueue;
+std::condition_variable paymentGatewayCV, searchRequestCV;;
+std::mutex rechargeCreditRequestMutex, paymentGatewayMutex, searchRequestQueueMutex, semUserCredit;
+std::queue<TopUpRequest> rechargeCreditRequestQueue;
+std::queue<SearchRequest> searchRequestQueue;
+
 bool endRequest = false;
 
-/* Generate random number between 0 and max */
+/* Generate random number between 1 and max */
 int generateRandomNumber(int max){
     usleep(1000);
     struct timespec ts;
